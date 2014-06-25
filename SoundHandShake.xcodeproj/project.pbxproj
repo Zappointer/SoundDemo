@@ -30,6 +30,9 @@
 		961268C8195A7CA9000C6CBB /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 961268C7195A7CA9000C6CBB /* CoreAudio.framework */; };
 		961268CA195A7CB1000C6CBB /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 961268C9195A7CB1000C6CBB /* Accelerate.framework */; };
 		961268CD195A7D8F000C6CBB /* CADebugPrintf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 961268CB195A7D8F000C6CBB /* CADebugPrintf.cpp */; };
+		96EC1BE4195AB042002E56FB /* Synth.m in Sources */ = {isa = PBXBuildFile; fileRef = 96EC1BE3195AB042002E56FB /* Synth.m */; };
+		96EC1BE7195AB04D002E56FB /* MHAudioBufferPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 96EC1BE6195AB04D002E56FB /* MHAudioBufferPlayer.m */; };
+		96EC1BEA195AB061002E56FB /* DemoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 96EC1BE9195AB061002E56FB /* DemoViewController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -77,6 +80,12 @@
 		961268C9195A7CB1000C6CBB /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		961268CB195A7D8F000C6CBB /* CADebugPrintf.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CADebugPrintf.cpp; sourceTree = "<group>"; };
 		961268CC195A7D8F000C6CBB /* CADebugPrintf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CADebugPrintf.h; sourceTree = "<group>"; };
+		96EC1BE2195AB042002E56FB /* Synth.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Synth.h; sourceTree = "<group>"; };
+		96EC1BE3195AB042002E56FB /* Synth.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Synth.m; sourceTree = "<group>"; };
+		96EC1BE5195AB04D002E56FB /* MHAudioBufferPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHAudioBufferPlayer.h; sourceTree = "<group>"; };
+		96EC1BE6195AB04D002E56FB /* MHAudioBufferPlayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MHAudioBufferPlayer.m; sourceTree = "<group>"; };
+		96EC1BE8195AB061002E56FB /* DemoViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DemoViewController.h; sourceTree = "<group>"; };
+		96EC1BE9195AB061002E56FB /* DemoViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DemoViewController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,6 +153,7 @@
 		96126885195A77C2000C6CBB /* SoundHandShake */ = {
 			isa = PBXGroup;
 			children = (
+				96EC1BE1195AB030002E56FB /* SoundGeneration */,
 				961268B7195A7B24000C6CBB /* PitchDetection */,
 				9612688E195A77C2000C6CBB /* AppDelegate.h */,
 				9612688F195A77C2000C6CBB /* AppDelegate.m */,
@@ -201,6 +211,19 @@
 				961268BB195A7B3D000C6CBB /* RIOInterface.mm */,
 			);
 			name = PitchDetection;
+			sourceTree = "<group>";
+		};
+		96EC1BE1195AB030002E56FB /* SoundGeneration */ = {
+			isa = PBXGroup;
+			children = (
+				96EC1BE8195AB061002E56FB /* DemoViewController.h */,
+				96EC1BE9195AB061002E56FB /* DemoViewController.m */,
+				96EC1BE5195AB04D002E56FB /* MHAudioBufferPlayer.h */,
+				96EC1BE6195AB04D002E56FB /* MHAudioBufferPlayer.m */,
+				96EC1BE2195AB042002E56FB /* Synth.h */,
+				96EC1BE3195AB042002E56FB /* Synth.m */,
+			);
+			name = SoundGeneration;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -301,7 +324,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				96EC1BE7195AB04D002E56FB /* MHAudioBufferPlayer.m in Sources */,
+				96EC1BE4195AB042002E56FB /* Synth.m in Sources */,
 				961268C2195A7C70000C6CBB /* CAXException.cpp in Sources */,
+				96EC1BEA195AB061002E56FB /* DemoViewController.m in Sources */,
 				961268BD195A7B3D000C6CBB /* RIOInterface.mm in Sources */,
 				96126899195A77C2000C6CBB /* ViewController.m in Sources */,
 				96126890195A77C2000C6CBB /* AppDelegate.m in Sources */,

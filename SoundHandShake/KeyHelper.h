@@ -22,12 +22,14 @@
 
 @property(nonatomic, retain) NSMutableDictionary *keyMapping;
 @property(nonatomic, retain) NSMutableDictionary *frequencyMapping;
+@property (nonatomic,strong) NSDictionary *noteMapping;
 @property (nonatomic,assign) CGFloat lowPassFrequency;
 @property (nonatomic,assign) CGFloat highPassFrequency;
 
 #pragma mark Key Generation
 - (void)buildKeyMapping;
 - (NSString *)closestCharForFrequency:(float)frequency;
+- (NSString *) noteStringFromMapping:(int)note;
 
 #pragma mark Singleton Methods
 + (KeyHelper *)sharedInstance;
