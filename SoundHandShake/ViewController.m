@@ -11,6 +11,8 @@
 #import "KeyHelper.h"
 #import "Synth.h"
 #import "MHAudioBufferPlayer.h"
+#import "ToneGenerator.h"
+#import "SoundPreference.h"
 
 typedef struct {
     CGFloat frequency;
@@ -35,12 +37,21 @@ typedef struct {
     NSString *sequence;
     int sequenceLength;
     NSTimeInterval foundBTime;
+    double minFrequencyValue;
+    double maxFrequencyValue;
+    double toneFrequencyValue;
 }
 
-@property (nonatomic,assign) CGFloat currentFrequency;
 @property (nonatomic,weak) IBOutlet UILabel *frequencyLabel;
 @property (nonatomic,weak) IBOutlet UILabel *statucLabel;
 @property (nonatomic,weak) IBOutlet UILabel *codeLabel;
+@property (nonatomic,weak) IBOutlet UITextField *minFrequency;
+@property (nonatomic,weak) IBOutlet UITextField *maxFrequency;
+@property (nonatomic,weak) IBOutlet UISlider *frequencySlider;
+@property (nonatomic,weak) IBOutlet UILabel *toneFrequencyLabel;
+
+@property (nonatomic,assign) CGFloat currentFrequency;
+@property (nonatomic,strong) ToneGenerator *toneGenerator;
 @property (nonatomic,strong) NSLock *synthLock;
 @property (nonatomic,strong) Synth *synth;
 @property (nonatomic,strong) MHAudioBufferPlayer *player;
@@ -49,16 +60,38 @@ typedef struct {
 
 @implementation ViewController
 
+- (ToneGenerator *) toneGenerator {
+    if(!_toneGenerator) {
+        _toneGenerator = [ToneGenerator new];
+        _toneGenerator->sampleRate = APP_SAMPLERATE;
+    }
+    return _toneGenerator;
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     
+    minFrequencyValue = 16000;
+    maxFrequencyValue = 20000;
+    self.minFrequency.text = [@(minFrequencyValue) stringValue];
+    self.maxFrequency.text = [@(maxFrequencyValue) stringValue];
+    toneFrequencyValue = self.frequencySlider.value * (maxFrequencyValue - minFrequencyValue) + minFrequencyValue;
+    self.toneFrequencyLabel.text = [@(toneFrequencyValue) stringValue];
+    self.toneGenerator->frequency = toneFrequencyValue;
+    
     RIOInterface *rioRef = [RIOInterface sharedInstance];
-	[rioRef setSampleRate:44100];
-	[rioRef setFrequency:294];
+	[rioRef setSampleRate:APP_SAMPLERATE];
+	[rioRef setFrequency:15000];
 	[rioRef initializeAudioSession];
     self.statucLabel.text = @"scanning...";
-    [self setUpAudioBufferPlayer];
+//    [self setUpAudioBufferPlayer];
+}
+
+- (IBAction) slideChanged:(UISlider *)slider {
+    toneFrequencyValue = slider.value * (maxFrequencyValue - minFrequencyValue) + minFrequencyValue;
+    self.toneFrequencyLabel.text = [@(toneFrequencyValue) stringValue];
+    self.toneGenerator->frequency = toneFrequencyValue;
 }
 
 - (NSLock *) synthLock {
@@ -145,13 +178,14 @@ typedef struct {
     __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         __strong typeof(weakSelf) strongSelf = weakSelf;
-        KeyHelper *helper = [KeyHelper sharedInstance];
-        NSString *closestChar = [helper closestCharForFrequency:newFrequency];
-        if(closestChar.length > 0) {
-            strongSelf.frequencyLabel.text = closestChar;
-            [strongSelf detectStart: newFrequency withChar: closestChar];
-            [strongSelf recordSequence: closestChar];
-        }
+        strongSelf.frequencyLabel.text = [@(newFrequency) stringValue];
+//        KeyHelper *helper = [KeyHelper sharedInstance];
+//        NSString *closestChar = [helper closestCharForFrequency:newFrequency];
+//        if(closestChar.length > 0) {
+//            strongSelf.frequencyLabel.text = closestChar;
+//            [strongSelf detectStart: newFrequency withChar: closestChar];
+//            [strongSelf recordSequence: closestChar];
+//        }
     });
 }
 
@@ -240,6 +274,20 @@ typedef struct {
     [self.synthLock lock];
 	[self.synth playNote:[note integerValue]];
 	[self.synthLock unlock];
+}
+
+- (void) releaeNote:(NSNumber *)note {
+    [self.synthLock lock];
+    [self.synth releaseNote:[note integerValue]];
+    [self.synthLock unlock];
+}
+
+- (IBAction) playTone:(id)sender {
+    [self.toneGenerator play];
+}
+
+- (IBAction) stopTone:(id)sender {
+    [self.toneGenerator stop];
 }
 
 @end

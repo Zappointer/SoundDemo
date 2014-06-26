@@ -50,8 +50,8 @@ const float ReleaseTime = 0.5f;
 - (void)equalTemperament
 {
 	for (int n = 0; n < 128; ++n) {
-		_pitches[n] = 3520.0f * powf(2, (n - 69)/12.0f);  // A4 = MIDI key 69
-    } // 440
+		_pitches[n] = 440.0f * powf(2, (n - 69)/12.0f);  // A4 = MIDI key 69
+    }
 }
 
 - (void)buildSineTable

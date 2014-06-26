@@ -1,4 +1,0 @@
-
-@interface DemoViewController : UIViewController
-
-@end

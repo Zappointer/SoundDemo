@@ -104,31 +104,31 @@ static void PlayCallback(void *inUserData, AudioQueueRef inAudioQueue, AudioQueu
 	{
 		[self stop];
 		[self tearDownPlayQueue];
-		[self tearDownAudioSession];
+//		[self tearDownAudioSession];
 	}
 }
 
-- (void)setUpAudioSession
-{
-	AudioSessionInitialize(
-		NULL,
-		NULL,
-		InterruptionListenerCallback,
-		(__bridge void *)self);
-
-	UInt32 sessionCategory = kAudioSessionCategory_MediaPlayback;
-	AudioSessionSetProperty(
-		kAudioSessionProperty_AudioCategory,
-		sizeof(sessionCategory),
-		&sessionCategory);
-
-	AudioSessionSetActive(true);
-}
-
-- (void)tearDownAudioSession
-{
-	AudioSessionSetActive(false);
-}
+//- (void)setUpAudioSession
+//{
+//	AudioSessionInitialize(
+//		NULL,
+//		NULL,
+//		InterruptionListenerCallback,
+//		(__bridge void *)self);
+//
+//	UInt32 sessionCategory = kAudioSessionCategory_MediaPlayback;
+//	AudioSessionSetProperty(
+//		kAudioSessionProperty_AudioCategory,
+//		sizeof(sessionCategory),
+//		&sessionCategory);
+//
+//	AudioSessionSetActive(true);
+//}
+//
+//- (void)tearDownAudioSession
+//{
+//	AudioSessionSetActive(false);
+//}
 
 - (void)setUpPlayQueue
 {

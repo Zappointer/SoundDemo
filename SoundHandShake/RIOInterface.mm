@@ -28,10 +28,6 @@ void ConvertInt16ToFloat(RIOInterface* THIS, void *buf, float *outputBuf, size_t
 	if (processingGraph) {
 		AUGraphStop(processingGraph);
 	}
-	
-	// Clean up the audio session
-	AVAudioSession *session = [AVAudioSession sharedInstance];
-	[session setActive:NO error:nil];
 }
 
 #pragma mark -
@@ -161,7 +157,7 @@ OSStatus RenderFFTCallback (void					*inRefCon,
 		
 		// Update the UI with our newly acquired frequency value.
 		[THIS->listener frequencyChangedWithValue:bin*(THIS->sampleRate/bufferCapacity)];
-		printf("Dominant frequency: %f   bin: %d \n", bin*(THIS->sampleRate/bufferCapacity), bin);
+//		printf("Dominant frequency: %f   bin: %d \n", bin*(THIS->sampleRate/bufferCapacity), bin);
 	}
 	
 	
@@ -217,18 +213,10 @@ void ConvertInt16ToFloat(RIOInterface* THIS, void *buf, float *outputBuf, size_t
 // Sets up the audio session based on the properties that were set in the init
 // method.
 - (void)initializeAudioSession {
-	NSError	*err = nil;
 	AVAudioSession *session = [AVAudioSession sharedInstance];
-	[session setPreferredSampleRate: sampleRate error: &err];
-	[session setCategory:AVAudioSessionCategoryPlayAndRecord error:&err];
-    UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_Speaker;
-    AudioSessionSetProperty (kAudioSessionProperty_OverrideAudioRoute,sizeof (audioRouteOverride),&audioRouteOverride);
-	[session setActive:YES error:&err];
-	
 	// After activation, update our sample rate. We need to update because there
 	// is a possibility the system cannot grant our request. 
 	sampleRate = [session sampleRate];
-
 	[self realFFTSetup];
 }
 
