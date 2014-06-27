@@ -36,9 +36,7 @@
     NSError	*err = nil;
     AVAudioSession *session = [AVAudioSession sharedInstance];
     [session setPreferredSampleRate: APP_SAMPLERATE error: &err];
-    [session setCategory:AVAudioSessionCategoryPlayAndRecord error:&err];
-//    UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_Speaker;
-//    AudioSessionSetProperty (kAudioSessionProperty_OverrideAudioRoute,sizeof (audioRouteOverride),&audioRouteOverride);
+    [session setCategory:AVAudioSessionCategoryPlayback error:&err];
     [session setActive:YES error:&err];
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
 }

@@ -19,13 +19,16 @@ typedef struct {
     NSTimeInterval timeStamp;
 } soundPacket;
 
-#define STARTSEQUENCE_MAX_DIFF 0.5
-#define INDIVIDUAL_DIFF 0.2
+#define STARTSEQUENCE_MAX_DIFF 0.25
+#define INDIVIDUAL_DIFF 0.1
 // 60 c, 61 db,62 d,63 db,64 e,65 f,66 gb ,67 g,68 ab,69 a,70 bb, 71 b
 #define STARTNOTE 60
 #define ENDNOTE 60
-#define STARTCHAR @"C"
-#define ENDCHAR @"C"
+#define STARTCHAR @"a"
+#define ENDCHAR @"b"
+#define TARGETLENGTH 12
+
+NSString * letters = @"0123456789ab";
 
 @interface ViewController () <ListernerDelegate>
 {
@@ -40,6 +43,9 @@ typedef struct {
     double minFrequencyValue;
     double maxFrequencyValue;
     double toneFrequencyValue;
+    BOOL initalized;
+    NSString *prevChar;
+    int seemCount;
 }
 
 @property (nonatomic,weak) IBOutlet UILabel *frequencyLabel;
@@ -72,18 +78,14 @@ typedef struct {
 {
     [super viewDidLoad];
     
-    minFrequencyValue = 16000;
-    maxFrequencyValue = 20000;
+    minFrequencyValue = 18500;
+    maxFrequencyValue = 19500;
     self.minFrequency.text = [@(minFrequencyValue) stringValue];
     self.maxFrequency.text = [@(maxFrequencyValue) stringValue];
     toneFrequencyValue = self.frequencySlider.value * (maxFrequencyValue - minFrequencyValue) + minFrequencyValue;
     self.toneFrequencyLabel.text = [@(toneFrequencyValue) stringValue];
     self.toneGenerator->frequency = toneFrequencyValue;
     
-    RIOInterface *rioRef = [RIOInterface sharedInstance];
-	[rioRef setSampleRate:APP_SAMPLERATE];
-	[rioRef setFrequency:15000];
-	[rioRef initializeAudioSession];
     self.statucLabel.text = @"scanning...";
 //    [self setUpAudioBufferPlayer];
 }
@@ -165,12 +167,12 @@ typedef struct {
 
 - (void) viewDidAppear:(BOOL)animated {
     [super viewDidAppear: animated];
-    [[RIOInterface sharedInstance] startListening: self];
+//    [[RIOInterface sharedInstance] startListening: self];
 }
 
 - (void) viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear: animated];
-    [[RIOInterface sharedInstance] stopListening];
+//    [[RIOInterface sharedInstance] stopListening];
 }
 
 - (void) frequencyChangedWithValue:(float)newFrequency {
@@ -179,26 +181,76 @@ typedef struct {
     dispatch_async(dispatch_get_main_queue(), ^{
         __strong typeof(weakSelf) strongSelf = weakSelf;
         strongSelf.frequencyLabel.text = [@(newFrequency) stringValue];
-//        KeyHelper *helper = [KeyHelper sharedInstance];
-//        NSString *closestChar = [helper closestCharForFrequency:newFrequency];
-//        if(closestChar.length > 0) {
-//            strongSelf.frequencyLabel.text = closestChar;
-//            [strongSelf detectStart: newFrequency withChar: closestChar];
-//            [strongSelf recordSequence: closestChar];
-//        }
+        int letterIndex = [strongSelf indexFromFrequeucy: newFrequency];
+
+        if(letterIndex >= 0) {
+            NSString *closestChar = [letters substringWithRange: NSMakeRange(letterIndex,1)];
+            NSLog(@"%@",closestChar);
+            strongSelf.frequencyLabel.text = [@(newFrequency) stringValue];
+            [strongSelf detectStart: newFrequency withChar: closestChar];
+            [strongSelf recordSequence: closestChar];
+        }
     });
+}
+
+- (int) indexFromFrequeucy:(float) frequency {
+    if(frequency < (minFrequencyValue - 50) || frequency > (minFrequencyValue + (letters.length-1) * 50 + 50)) {
+        return -1;
+    }
+    frequency -= minFrequencyValue;
+    if(frequency <= 25) {
+        return 0;
+    }
+    NSUInteger index = frequency / 50;
+    float mod = fmodf(frequency,50);
+    if(mod > 25) {
+        index++;
+    }
+    if(index >= letters.length) {
+        index = letters.length-1;
+    }
+    return (int)index;
 }
 
 - (void) recordSequence:(NSString *)closestChar {
     if(foundStart && !foundSignal) {
         foundATime = [[NSDate date] timeIntervalSince1970];
-        if(foundATime - foundBTime > INDIVIDUAL_DIFF) {
+        if([closestChar isEqualToString: ENDCHAR]) {
+            return;
+        }
+        if(prevChar == nil) {
+            seemCount = 1;
+            prevChar = closestChar;
             sequence = [NSString stringWithFormat: @"%@%@",sequence,closestChar];
-            self.statucLabel.text = [NSString stringWithFormat:@"start sequence founded: %@",sequence];
-            foundBTime = foundATime;
+            self.statucLabel.text = [NSString stringWithFormat:@"founded: %@",sequence];
             sequenceLength++;
-            if(sequenceLength >= 4) {
+            if(sequenceLength >= TARGETLENGTH) {
                 foundSignal = YES;
+                [[RIOInterface sharedInstance] stopListening];
+            }
+        } else {
+            if([prevChar isEqualToString: closestChar]) {
+                seemCount++;
+                if(seemCount == 4) {
+                    seemCount = 2;
+                    sequence = [NSString stringWithFormat: @"%@%@",sequence,closestChar];
+                    self.statucLabel.text = [NSString stringWithFormat:@"founded: %@",sequence];
+                    sequenceLength++;
+                    if(sequenceLength >= TARGETLENGTH) {
+                        foundSignal = YES;
+                        [[RIOInterface sharedInstance] stopListening];
+                    }
+                }
+            } else {
+                prevChar = closestChar;
+                seemCount = 1;
+                sequence = [NSString stringWithFormat: @"%@%@",sequence,closestChar];
+                self.statucLabel.text = [NSString stringWithFormat:@"founded: %@",sequence];
+                sequenceLength++;
+                if(sequenceLength >= TARGETLENGTH) {
+                    foundSignal = YES;
+                    [[RIOInterface sharedInstance] stopListening];
+                }
             }
         }
     }
@@ -223,6 +275,7 @@ typedef struct {
                     foundStart = YES;
                     sequence = @"";
                     sequenceLength = 0;
+                    prevChar = nil;
                     self.statucLabel.text = @"start sequence founded";
                 } else {
                     foundA = NO;
@@ -232,7 +285,24 @@ typedef struct {
     }
 }
 
+- (void) startListener {
+    if(!initalized) {
+        RIOInterface *rioRef = [RIOInterface sharedInstance];
+        [rioRef setSampleRate:APP_SAMPLERATE];
+        [rioRef setFrequency:15000];
+        [rioRef initializeAudioSession];
+        initalized = YES;
+    }
+    [[RIOInterface sharedInstance] stopListening];
+    [[RIOInterface sharedInstance] startListening: self];
+}
+
 - (IBAction) restart:(id)sender {
+    [self startListener];
+    [self reset];
+}
+
+- (void) reset {
     self.statucLabel.text = @"scanning...";
     sequence = @"";
     foundStart = NO;
@@ -243,51 +313,62 @@ typedef struct {
 }
 
 - (IBAction) createRandomCode:(id)sender {
-    [self restart: nil];
+//    [self restart: nil];
     // random code
-    int note[4];
-    note[0] = arc4random() %12 + 60;
-    note[1] = arc4random() %12 + 60;
-    note[2] = arc4random() %12 + 60;
-    note[3] = arc4random() %12 + 60;
-    self.codeLabel.text = [NSString stringWithFormat: @"%@-%@-%@-%@",
-                           [[KeyHelper sharedInstance] noteStringFromMapping: note[0]],
-                           [[KeyHelper sharedInstance] noteStringFromMapping: note[1]],
-                           [[KeyHelper sharedInstance] noteStringFromMapping: note[2]],
-                           [[KeyHelper sharedInstance] noteStringFromMapping: note[3]]];
+    int note[TARGETLENGTH];
+    NSMutableString *output = [NSMutableString new];
+    for(int i = 0; i < TARGETLENGTH; i++) {
+        note[i] = arc4random() %(letters.length-2);
+        [output appendString: [letters substringWithRange: NSMakeRange(note[i], 1)]];
+    }
+    
+    self.codeLabel.text = [NSString stringWithFormat: @"%@", output];
+    
     // start code
     CGFloat delay = 0;
-    [self performSelector: @selector(playNote:)  withObject: @(STARTNOTE) afterDelay: delay];
-    delay += 0.25;
-    [self performSelector: @selector(playNote:)  withObject: @(ENDNOTE) afterDelay: delay];
-    delay += 0.2;
-    [self performSelector: @selector(playNote:)  withObject: @(note[0]) afterDelay: delay];
-    delay += 0.21;
-    [self performSelector: @selector(playNote:)  withObject: @(note[1]) afterDelay: delay];
-    delay += 0.22;
-    [self performSelector: @selector(playNote:)  withObject: @(note[2]) afterDelay: delay];
-    delay += 0.23;
-    [self performSelector: @selector(playNote:)  withObject: @(note[3]) afterDelay: delay];
+    self.toneGenerator->frequency = [self frequecyFromLetterIndex: letters.length - 2];
+    [self.toneGenerator play];
+    delay += 0.1;
+    [self performSelector: @selector(playFrequencyAtIndex:)  withObject: @(letters.length-1) afterDelay: delay];
+    for(int i = 0; i < TARGETLENGTH; i++) {
+        delay += INDIVIDUAL_DIFF;
+        [self performSelector: @selector(playFrequencyAtIndex:)  withObject: @(note[i]) afterDelay: delay];
+    }
+    
+    delay += INDIVIDUAL_DIFF;
+    [self performSelector: @selector(stopFrequeucy)  withObject: nil afterDelay: delay];
+}
+
+- (double) frequecyFromLetterIndex:(NSUInteger) index {
+    return minFrequencyValue + 50 * index;
+}
+
+- (void) playFrequencyAtIndex:(NSNumber *)index {
+    self.toneGenerator->frequency = [self frequecyFromLetterIndex: [index integerValue]];
+}
+
+- (void) stopFrequeucy {
+    [self.toneGenerator stop];
 }
 
 - (void) playNote:(NSNumber *)note {
-    [self.synthLock lock];
-	[self.synth playNote:[note integerValue]];
-	[self.synthLock unlock];
+//    [self.synthLock lock];
+//	[self.synth playNote:[note integerValue]];
+//	[self.synthLock unlock];
 }
 
 - (void) releaeNote:(NSNumber *)note {
-    [self.synthLock lock];
-    [self.synth releaseNote:[note integerValue]];
-    [self.synthLock unlock];
+//    [self.synthLock lock];
+//    [self.synth releaseNote:[note integerValue]];
+//    [self.synthLock unlock];
 }
 
 - (IBAction) playTone:(id)sender {
-    [self.toneGenerator play];
+    
 }
 
 - (IBAction) stopTone:(id)sender {
-    [self.toneGenerator stop];
+    
 }
 
 @end

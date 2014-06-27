@@ -54,8 +54,16 @@ void ConvertInt16ToFloat(RIOInterface* THIS, void *buf, float *outputBuf, size_t
 #pragma mark Listener Controls
 - (void)startListening:(id<ListernerDelegate>)aListener {
 	self.listener = aListener;
-	[self createAUProcessingGraph];
-	[self initializeAndStartProcessingGraph];	
+    OSStatus result = 0;
+    if(!processingGraph) {
+        [self createAUProcessingGraph];
+        result = [self initializeAndStartProcessingGraph];
+    }
+    if (result >= 0) {
+		AUGraphStart(processingGraph);
+	} else {
+		XThrow(result, "error initializing processing graph");
+	}
 }
 
 
@@ -65,13 +73,8 @@ void ConvertInt16ToFloat(RIOInterface* THIS, void *buf, float *outputBuf, size_t
 
 #pragma mark - 
 #pragma mark Generic Audio Controls
-- (void)initializeAndStartProcessingGraph {
-	OSStatus result = AUGraphInitialize(processingGraph);
-	if (result >= 0) {
-		AUGraphStart(processingGraph);
-	} else {
-		XThrow(result, "error initializing processing graph");
-	}
+- (OSStatus)initializeAndStartProcessingGraph {
+	return AUGraphInitialize(processingGraph);
 }
 
 - (void)stopProcessingGraph {
@@ -300,7 +303,7 @@ void ConvertInt16ToFloat(RIOInterface* THIS, void *buf, float *outputBuf, size_t
 
 	// Allocate AudioBuffers for use when listening.
 	// TODO: Move into initialization...should only be required once.
-	bufferList = (AudioBufferList *)malloc(sizeof(AudioBuffer));
+	bufferList = (AudioBufferList *)malloc(sizeof(AudioBufferList));
 	bufferList->mNumberBuffers = 1;
 	bufferList->mBuffers[0].mNumberChannels = 1;
 	

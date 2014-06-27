@@ -140,7 +140,7 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState)
     
     // Start playback
     err = AudioOutputUnitStart(toneUnit);
-    NSAssert1(err == noErr, @"Error starting unit: %hd", err);
+//    NSAssert1(err == noErr, @"Error starting unit: %hd", err);
 }
 
 - (instancetype) init {

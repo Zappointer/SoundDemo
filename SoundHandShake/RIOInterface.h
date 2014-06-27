@@ -81,7 +81,7 @@
 - (void)stopListening;
 
 #pragma mark Generic Audio Controls
-- (void)initializeAndStartProcessingGraph;
+- (OSStatus)initializeAndStartProcessingGraph;
 - (void)stopProcessingGraph;
 
 #pragma mark Singleton Methods
