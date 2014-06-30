@@ -78,7 +78,7 @@ NSString * letters = @"0123456789ab";
 {
     [super viewDidLoad];
     
-    minFrequencyValue = 18500;
+    minFrequencyValue = 200;
     maxFrequencyValue = 19500;
     self.minFrequency.text = [@(minFrequencyValue) stringValue];
     self.maxFrequency.text = [@(maxFrequencyValue) stringValue];
@@ -194,10 +194,10 @@ NSString * letters = @"0123456789ab";
 }
 
 - (int) indexFromFrequeucy:(float) frequency {
-    if(frequency < (minFrequencyValue - 50) || frequency > (minFrequencyValue + (letters.length-1) * 50 + 50)) {
+    if(frequency < (18500 - 50) || frequency > (18500 + (letters.length-1) * 50 + 50)) {
         return -1;
     }
-    frequency -= minFrequencyValue;
+    frequency -= 18500;
     if(frequency <= 25) {
         return 0;
     }
@@ -340,7 +340,7 @@ NSString * letters = @"0123456789ab";
 }
 
 - (double) frequecyFromLetterIndex:(NSUInteger) index {
-    return minFrequencyValue + 50 * index;
+    return 18500 + 50 * index;
 }
 
 - (void) playFrequencyAtIndex:(NSNumber *)index {
@@ -364,11 +364,14 @@ NSString * letters = @"0123456789ab";
 }
 
 - (IBAction) playTone:(id)sender {
+    [self.toneGenerator stop];
+    self.toneGenerator->frequency = toneFrequencyValue;
+    [self.toneGenerator play];
     
 }
 
 - (IBAction) stopTone:(id)sender {
-    
+    [self.toneGenerator stop];
 }
 
 @end

@@ -59,6 +59,7 @@ void ConvertInt16ToFloat(RIOInterface* THIS, void *buf, float *outputBuf, size_t
         [self createAUProcessingGraph];
         result = [self initializeAndStartProcessingGraph];
     }
+    frequencyDiff = sampleRate/bufferCapacity;
     if (result >= 0) {
 		AUGraphStart(processingGraph);
 	} else {
@@ -102,6 +103,7 @@ OSStatus RenderFFTCallback (void					*inRefCon,
 	uint32_t stride = 1;
 	int bufferCapacity = THIS->bufferCapacity;
 	SInt16 index = THIS->index;
+    CGFloat frequencyDiff = THIS->frequencyDiff;
 	
 	AudioUnit rioUnit = THIS->ioUnit;
 	OSStatus renderErr;
@@ -159,8 +161,8 @@ OSStatus RenderFFTCallback (void					*inRefCon,
 		memset(outputBuffer, 0, n*sizeof(SInt16));
 		
 		// Update the UI with our newly acquired frequency value.
-		[THIS->listener frequencyChangedWithValue:bin*(THIS->sampleRate/bufferCapacity)];
-//		printf("Dominant frequency: %f   bin: %d \n", bin*(THIS->sampleRate/bufferCapacity), bin);
+		[THIS->listener frequencyChangedWithValue:bin*frequencyDiff];
+		printf("Dominant frequency: %f %f %f  bin: %d \n", dominantFrequency, bin*(THIS->sampleRate/bufferCapacity),bin*frequencyDiff,bin);
 	}
 	
 	
@@ -207,7 +209,7 @@ void ConvertInt16ToFloat(RIOInterface* THIS, void *buf, float *outputBuf, size_t
 	index = 0;
 	A.realp = (float *)malloc(nOver2 * sizeof(float));
 	A.imagp = (float *)malloc(nOver2 * sizeof(float));
-	fftSetup = vDSP_create_fftsetup(log2n, FFT_RADIX2);
+	fftSetup = vDSP_create_fftsetup(log2n, FFT_RADIX5);
 }
 
 

@@ -54,6 +54,7 @@
 
 	float sampleRate;
 	float frequency;
+    CGFloat frequencyDiff;
 }
 
 @property(nonatomic, assign) id<AVAudioPlayerDelegate> audioPlayerDelegate;
