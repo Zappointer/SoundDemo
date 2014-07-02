@@ -26,25 +26,33 @@ OSStatus RenderTone(
     (__bridge ToneGenerator *)inRefCon;
     double theta = generator->theta;
     double theta_increment = 2.0 * M_PI * generator->frequency / generator->sampleRate;
-    
+    double theta2 = generator->theta2;
+    double theta2_increment = 2.0 * M_PI * (generator->frequency/100) / generator->sampleRate;
     // This is a mono tone generator so we only need the first buffer
     const int channel = 0;
     Float32 *buffer = (Float32 *)ioData->mBuffers[channel].mData;
+    Float32 *buffer2 = (Float32 *)ioData->mBuffers[1].mData;
     
     // Generate the samples
     for (UInt32 frame = 0; frame < inNumberFrames; frame++)
     {
         buffer[frame] = sin(theta) * amplitude;
-        
         theta += theta_increment;
         if (theta > 2.0 * M_PI)
         {
             theta -= 2.0 * M_PI;
         }
+        
+        buffer2[frame] = sin(theta2) * amplitude;
+        theta2 += theta2_increment;
+        if(theta2 > 2.0 * M_PI) {
+            theta2 -= 2.0 * M_PI;
+        }
     }
     
     // Store the theta back in the view controller
     generator->theta = theta;
+    generator->theta2 = theta2;
     
     return noErr;
 }
@@ -107,7 +115,7 @@ void ToneInterruptionListener(void *inClientData, UInt32 inInterruptionState)
     streamFormat.mBytesPerPacket = four_bytes_per_float;
     streamFormat.mFramesPerPacket = 1;
     streamFormat.mBytesPerFrame = four_bytes_per_float;
-    streamFormat.mChannelsPerFrame = 1;
+    streamFormat.mChannelsPerFrame = 2;
     streamFormat.mBitsPerChannel = four_bytes_per_float * eight_bits_per_byte;
     err = AudioUnitSetProperty (toneUnit,
                                 kAudioUnitProperty_StreamFormat,

@@ -14,7 +14,7 @@
     double frequency;
     double sampleRate;
     double theta;
-
+    double theta2;
 }
 
 - (void) play;

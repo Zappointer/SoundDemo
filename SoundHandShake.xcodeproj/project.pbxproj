@@ -12,7 +12,7 @@
 		96126884195A77C2000C6CBB /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 96126883195A77C2000C6CBB /* UIKit.framework */; };
 		9612688A195A77C2000C6CBB /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 96126888195A77C2000C6CBB /* InfoPlist.strings */; };
 		9612688C195A77C2000C6CBB /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 9612688B195A77C2000C6CBB /* main.m */; };
-		96126890195A77C2000C6CBB /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 9612688F195A77C2000C6CBB /* AppDelegate.m */; };
+		96126890195A77C2000C6CBB /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9612688F195A77C2000C6CBB /* AppDelegate.mm */; };
 		96126893195A77C2000C6CBB /* Main_iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 96126891195A77C2000C6CBB /* Main_iPhone.storyboard */; };
 		96126899195A77C2000C6CBB /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 96126898195A77C2000C6CBB /* ViewController.m */; };
 		9612689B195A77C2000C6CBB /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9612689A195A77C2000C6CBB /* Images.xcassets */; };
@@ -31,6 +31,8 @@
 		961268CD195A7D8F000C6CBB /* CADebugPrintf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 961268CB195A7D8F000C6CBB /* CADebugPrintf.cpp */; };
 		96685CE9195BBAD800BC5EDA /* ToneGenerator.m in Sources */ = {isa = PBXBuildFile; fileRef = 96685CE8195BBAD800BC5EDA /* ToneGenerator.m */; };
 		96685CED195BC1C300BC5EDA /* SoundPreference.m in Sources */ = {isa = PBXBuildFile; fileRef = 96685CEC195BC1C300BC5EDA /* SoundPreference.m */; };
+		96CF6E9219626C6700AC9289 /* test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96CF6E9119626C6700AC9289 /* test.cpp */; };
+		96CF6EA91963EE9900AC9289 /* libitpp.8.2.1.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96CF6EA81963EE9900AC9289 /* libitpp.8.2.1.a */; };
 		96EC1BE4195AB042002E56FB /* Synth.m in Sources */ = {isa = PBXBuildFile; fileRef = 96EC1BE3195AB042002E56FB /* Synth.m */; };
 		96EC1BE7195AB04D002E56FB /* MHAudioBufferPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 96EC1BE6195AB04D002E56FB /* MHAudioBufferPlayer.m */; };
 /* End PBXBuildFile section */
@@ -55,7 +57,7 @@
 		9612688B195A77C2000C6CBB /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		9612688D195A77C2000C6CBB /* SoundHandShake-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SoundHandShake-Prefix.pch"; sourceTree = "<group>"; };
 		9612688E195A77C2000C6CBB /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
-		9612688F195A77C2000C6CBB /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		9612688F195A77C2000C6CBB /* AppDelegate.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
 		96126892195A77C2000C6CBB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main_iPhone.storyboard; sourceTree = "<group>"; };
 		96126897195A77C2000C6CBB /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		96126898195A77C2000C6CBB /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
@@ -83,6 +85,8 @@
 		96685CE8195BBAD800BC5EDA /* ToneGenerator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToneGenerator.m; sourceTree = "<group>"; };
 		96685CEB195BC1C300BC5EDA /* SoundPreference.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SoundPreference.h; sourceTree = "<group>"; };
 		96685CEC195BC1C300BC5EDA /* SoundPreference.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SoundPreference.m; sourceTree = "<group>"; };
+		96CF6E9119626C6700AC9289 /* test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = test.cpp; sourceTree = "<group>"; };
+		96CF6EA81963EE9900AC9289 /* libitpp.8.2.1.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libitpp.8.2.1.a; sourceTree = "<group>"; };
 		96EC1BE2195AB042002E56FB /* Synth.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Synth.h; sourceTree = "<group>"; };
 		96EC1BE3195AB042002E56FB /* Synth.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Synth.m; sourceTree = "<group>"; };
 		96EC1BE5195AB04D002E56FB /* MHAudioBufferPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHAudioBufferPlayer.h; sourceTree = "<group>"; };
@@ -94,6 +98,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				96CF6EA91963EE9900AC9289 /* libitpp.8.2.1.a in Frameworks */,
 				961268CA195A7CB1000C6CBB /* Accelerate.framework in Frameworks */,
 				961268C8195A7CA9000C6CBB /* CoreAudio.framework in Frameworks */,
 				961268C6195A7C9A000C6CBB /* AVFoundation.framework in Frameworks */,
@@ -139,6 +144,7 @@
 		9612687E195A77C2000C6CBB /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				96CF6EA81963EE9900AC9289 /* libitpp.8.2.1.a */,
 				961268C9195A7CB1000C6CBB /* Accelerate.framework */,
 				961268C7195A7CA9000C6CBB /* CoreAudio.framework */,
 				961268C5195A7C9A000C6CBB /* AVFoundation.framework */,
@@ -157,12 +163,13 @@
 				96EC1BE1195AB030002E56FB /* SoundGeneration */,
 				961268B7195A7B24000C6CBB /* PitchDetection */,
 				9612688E195A77C2000C6CBB /* AppDelegate.h */,
-				9612688F195A77C2000C6CBB /* AppDelegate.m */,
+				9612688F195A77C2000C6CBB /* AppDelegate.mm */,
 				96126891195A77C2000C6CBB /* Main_iPhone.storyboard */,
 				96126897195A77C2000C6CBB /* ViewController.h */,
 				96126898195A77C2000C6CBB /* ViewController.m */,
 				9612689A195A77C2000C6CBB /* Images.xcassets */,
 				96126886195A77C2000C6CBB /* Supporting Files */,
+				96CF6E9119626C6700AC9289 /* test.cpp */,
 			);
 			path = SoundHandShake;
 			sourceTree = "<group>";
@@ -333,8 +340,9 @@
 				96EC1BE4195AB042002E56FB /* Synth.m in Sources */,
 				961268C2195A7C70000C6CBB /* CAXException.cpp in Sources */,
 				961268BD195A7B3D000C6CBB /* RIOInterface.mm in Sources */,
+				96CF6E9219626C6700AC9289 /* test.cpp in Sources */,
 				96126899195A77C2000C6CBB /* ViewController.m in Sources */,
-				96126890195A77C2000C6CBB /* AppDelegate.m in Sources */,
+				96126890195A77C2000C6CBB /* AppDelegate.mm in Sources */,
 				9612688C195A77C2000C6CBB /* main.m in Sources */,
 				961268CD195A7D8F000C6CBB /* CADebugPrintf.cpp in Sources */,
 				96685CED195BC1C300BC5EDA /* SoundPreference.m in Sources */,
@@ -463,15 +471,32 @@
 		961268B2195A77C2000C6CBB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
+				CLANG_CXX_LIBRARY = "libc++";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SoundHandShake/SoundHandShake-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"/Applications/Xcode6-Beta2.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
+				);
 				INFOPLIST_FILE = "SoundHandShake/SoundHandShake-Info.plist";
+				LD_DYLIB_INSTALL_NAME = "";
+				LIBRARY_SEARCH_PATHS = (
+					"$(PROJECT_DIR)",
+					/usr/local/lib,
+					"/Users/jason/Desktop/sound_study/itpp-4.3.1/build/itpp/Debug",
+				);
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				USER_HEADER_SEARCH_PATHS = /usr/local/include/;
+				WARNING_LDFLAGS = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -479,15 +504,32 @@
 		961268B3195A77C2000C6CBB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
+				CLANG_CXX_LIBRARY = "libc++";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SoundHandShake/SoundHandShake-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"/Applications/Xcode6-Beta2.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
+				);
 				INFOPLIST_FILE = "SoundHandShake/SoundHandShake-Info.plist";
+				LD_DYLIB_INSTALL_NAME = "";
+				LIBRARY_SEARCH_PATHS = (
+					"$(PROJECT_DIR)",
+					/usr/local/lib,
+					"/Users/jason/Desktop/sound_study/itpp-4.3.1/build/itpp/Debug",
+				);
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				USER_HEADER_SEARCH_PATHS = /usr/local/include/;
+				WARNING_LDFLAGS = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
