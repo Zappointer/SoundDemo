@@ -10,22 +10,148 @@
 #import <AVFoundation/AVFoundation.h>
 #import "SoundPreference.h"
 #import <itpp/itcomm.h>
+#import <itpp/base/math/elem_math.h>
+#import <sstream>
 
 using namespace itpp;
+using namespace std;
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    
-    LDPC_Parity_Irregular H;
-    H.generate(10000,
-               "0 0.21991 0.23328 0.02058 0 0.08543 0.06540 0.04767 0.01912 "
-               "0 0 0 0 0 0 0 0 0 0.08064 0.22798",
-               "0 0 0 0 0 0 0 0.64854 0.34747 0.00399",
-               "rand",  // random unstructured matrix
-               "150 8"); // optimize
-    LDPC_Code C(&H);
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{
+        // only need 112 bit for 14 ascii character
+        LDPC_Parity_Irregular H;
+        H.generate(224,
+                   "0 0.27684 0.28342 0 0 0 0 0 0.43974",
+                   "0 0 0 0 0 0.01568 0.85244 0.13188",
+                   "rand",   // random unstructured matrix
+                   "500 8"); // optimize girth
+        LDPC_Generator_Systematic G(&H);
+        LDPC_Code C(&H, &G);
+        C.set_exit_conditions(2500);
+//        C.set_llrcalc(LLR_calc_unit(12,0,7));
+        NSLog(@"code generated completed\n");
+        {
+            bvec InData = zeros_b(112);
+            NSLog(@"%i",InData.length());
+    //        NSString *input = @"ab123456789012";
+            char input[] = "ab123987564912";
+            for(int i = 0; i < 14; i++) {
+                char c = input[i];
+                for(int bitIndex = 0; bitIndex < 8; bitIndex++) {
+                    InData.set(i*8+bitIndex, bin((c >> abs(bitIndex-7)) & 1));
+                }
+            }
+            bvec outData = C.encode(InData);
+    //        G.encode(InData,outData);
+//            cout << InData << endl;
+//            cout << outData << endl;
+            
+            BPSK Mod;
+            vec s = Mod.modulate_bits(outData);
+            // create noise
+            vec EbN0db = "0.6:0.2:5";
+            QLLRvec llr;
+            for(int n = 0; n < length(EbN0db); n++) {
+                double N0 = pow(10.0, -EbN0db(1) / 10.0) / C.get_rate();
+                NSLog(@"error rate %f",N0);
+                AWGN_Channel chan(N0 / 2);
+                vec x = chan(s);
+                vec softbits = Mod.demodulate_soft_bits(x, N0);
+                // Decode the received bits
+//                llr = C.get_llrcalc().to_qllr(softbits);
+                int it = C.bp_decode(C.get_llrcalc().to_qllr(softbits), llr);
+                if(it >= 0) {
+                    NSLog(@"used %i iteration on %i",it,n);
+                    break;
+                } else {
+                    llr.clear();
+                }
+                NSLog(@"used %i iteration on %i",it,n);
+            }
+            
+            cout << llr.length() << endl;
+            bvec answer = llr.get(0, 111) < 0;
+            cout << answer << endl;
+            char *final = (char*)calloc(14,sizeof(char));
+            for(int i = 0; i < 14; i++) {
+                for(int bitIndex = 0; bitIndex < 8; bitIndex++) {
+                    bin b = answer.get(i*8+bitIndex);
+                    if(b == 1) {
+                        final[i] |= 1 << abs(bitIndex-7);
+                    }
+                }
+            }
+            cout << final << endl;
+        }
+        
+        
+        
+//        int64_t Nbits = 5000LL; // maximum number of bits simulated
+//        // for each SNR point
+//        int Nbers = 2500;            // target number of bit errors per SNR point
+//        double BERmin = 1e-6;        // BER at which to terminate simulation
+//        vec EbN0db = "0.6:0.2:5";
+////        LDPC_Generator_Systematic G; // for codes created with ldpc_gen_codes since generator exists
+//        bool single_snr_mode = false;
+//        
+//        // High performance: 2500 iterations, high resolution LLR algebra
+//        C.set_exit_conditions(2500);
+//        // Alternate high speed settings: 50 iterations, logmax approximation
+//        // C.set_llrcalc(LLR_calc_unit(12,0,7));
+//        cout << C << endl;
+//        int N = C.get_nvar();             // number of bits per codeword
+//        BPSK Mod;
+//        bvec bitsin = zeros_b(N);
+//        vec s = Mod.modulate_bits(bitsin);
+//        RNG_randomize();
+//        for (int j = 0; j < length(EbN0db); j++) {
+//            // Noise variance is N0/2 per dimension
+//            double N0 = pow(10.0, -EbN0db(j) / 10.0) / C.get_rate();
+//            AWGN_Channel chan(N0 / 2);
+//            BERC berc;  // Counters for coded and uncoded BER
+//            BLERC ferc; // Counter for coded FER
+//            ferc.set_blocksize(C.get_nvar() - C.get_ncheck());
+//            for (int64_t i = 0; i < Nbits; i += C.get_nvar()) {
+//                // Received data
+//                vec x = chan(s);
+//                // Demodulate
+//                vec softbits = Mod.demodulate_soft_bits(x, N0);
+//                // Decode the received bits
+//                QLLRvec llr;
+//                C.bp_decode(C.get_llrcalc().to_qllr(softbits), llr);
+//                bvec bitsout = llr < 0;
+//                //      bvec bitsout = C.decode(softbits); // (only systematic bits)
+//                // Count the number of errors
+//                berc.count(bitsin, bitsout);
+//                ferc.count(bitsin, bitsout);
+//                if (single_snr_mode) {
+//                    cout << "Eb/N0 = " << EbN0db(j) << "  Simulated "
+//                    << ferc.get_total_blocks() << " frames and "
+//                    << berc.get_total_bits() << " bits. "
+//                    << "Obtained " << berc.get_errors() << " bit errors. "
+//                    << " BER: " << berc.get_errorrate()
+//                    << " FER: " << ferc.get_errorrate() << endl << flush;
+//                }
+//                else {
+//                    if (berc.get_errors() > Nbers)
+//                        break;
+//                }
+//            }
+//            cout << "Eb/N0 = " << EbN0db(j) << "  Simulated "
+//            << ferc.get_total_blocks() << " frames and "
+//            << berc.get_total_bits() << " bits. "
+//            << "Obtained " << berc.get_errors() << " bit errors. "
+//            << " BER: " << berc.get_errorrate()
+//            << " FER: " << ferc.get_errorrate() << endl << flush;
+//            if (berc.get_errorrate() < BERmin)
+//                break;
+//        }
+        
+        
+    });
     
     
 //    //Scalars and vectors:
