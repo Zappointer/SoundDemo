@@ -31,8 +31,11 @@
 		961268CD195A7D8F000C6CBB /* CADebugPrintf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 961268CB195A7D8F000C6CBB /* CADebugPrintf.cpp */; };
 		96685CE9195BBAD800BC5EDA /* ToneGenerator.m in Sources */ = {isa = PBXBuildFile; fileRef = 96685CE8195BBAD800BC5EDA /* ToneGenerator.m */; };
 		96685CED195BC1C300BC5EDA /* SoundPreference.m in Sources */ = {isa = PBXBuildFile; fileRef = 96685CEC195BC1C300BC5EDA /* SoundPreference.m */; };
-		96CF6E9219626C6700AC9289 /* test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 96CF6E9119626C6700AC9289 /* test.cpp */; };
+		96A5FC741973696C00890A20 /* LDPCGenerator.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96A5FC731973696C00890A20 /* LDPCGenerator.mm */; };
+		96A5FC771973706E00890A20 /* BSPKViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96A5FC761973706E00890A20 /* BSPKViewController.mm */; };
 		96CF6EA91963EE9900AC9289 /* libitpp.8.2.1.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 96CF6EA81963EE9900AC9289 /* libitpp.8.2.1.a */; };
+		96EAB2FC196F706500FA00F5 /* AMPlayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96EAB2F9196F706500FA00F5 /* AMPlayer.mm */; };
+		96EAB2FD196F706500FA00F5 /* AMRecorder.mm in Sources */ = {isa = PBXBuildFile; fileRef = 96EAB2FB196F706500FA00F5 /* AMRecorder.mm */; };
 		96EC1BE4195AB042002E56FB /* Synth.m in Sources */ = {isa = PBXBuildFile; fileRef = 96EC1BE3195AB042002E56FB /* Synth.m */; };
 		96EC1BE7195AB04D002E56FB /* MHAudioBufferPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 96EC1BE6195AB04D002E56FB /* MHAudioBufferPlayer.m */; };
 /* End PBXBuildFile section */
@@ -85,8 +88,16 @@
 		96685CE8195BBAD800BC5EDA /* ToneGenerator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToneGenerator.m; sourceTree = "<group>"; };
 		96685CEB195BC1C300BC5EDA /* SoundPreference.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SoundPreference.h; sourceTree = "<group>"; };
 		96685CEC195BC1C300BC5EDA /* SoundPreference.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SoundPreference.m; sourceTree = "<group>"; };
-		96CF6E9119626C6700AC9289 /* test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = test.cpp; sourceTree = "<group>"; };
+		96A5FC721973696C00890A20 /* LDPCGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LDPCGenerator.h; sourceTree = "<group>"; };
+		96A5FC731973696C00890A20 /* LDPCGenerator.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = LDPCGenerator.mm; sourceTree = "<group>"; };
+		96A5FC751973706E00890A20 /* BSPKViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BSPKViewController.h; sourceTree = "<group>"; };
+		96A5FC761973706E00890A20 /* BSPKViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BSPKViewController.mm; sourceTree = "<group>"; };
 		96CF6EA81963EE9900AC9289 /* libitpp.8.2.1.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libitpp.8.2.1.a; sourceTree = "<group>"; };
+		96EAB2F8196F706500FA00F5 /* AMPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AMPlayer.h; sourceTree = "<group>"; };
+		96EAB2F9196F706500FA00F5 /* AMPlayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AMPlayer.mm; sourceTree = "<group>"; };
+		96EAB2FA196F706500FA00F5 /* AMRecorder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AMRecorder.h; sourceTree = "<group>"; };
+		96EAB2FB196F706500FA00F5 /* AMRecorder.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AMRecorder.mm; sourceTree = "<group>"; };
+		96EAB2FE196F70BB00FA00F5 /* AMConstants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AMConstants.h; sourceTree = "<group>"; };
 		96EC1BE2195AB042002E56FB /* Synth.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Synth.h; sourceTree = "<group>"; };
 		96EC1BE3195AB042002E56FB /* Synth.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Synth.m; sourceTree = "<group>"; };
 		96EC1BE5195AB04D002E56FB /* MHAudioBufferPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHAudioBufferPlayer.h; sourceTree = "<group>"; };
@@ -164,12 +175,19 @@
 				961268B7195A7B24000C6CBB /* PitchDetection */,
 				9612688E195A77C2000C6CBB /* AppDelegate.h */,
 				9612688F195A77C2000C6CBB /* AppDelegate.mm */,
+				96EAB2FA196F706500FA00F5 /* AMRecorder.h */,
+				96EAB2FB196F706500FA00F5 /* AMRecorder.mm */,
+				96EAB2F8196F706500FA00F5 /* AMPlayer.h */,
+				96EAB2F9196F706500FA00F5 /* AMPlayer.mm */,
 				96126891195A77C2000C6CBB /* Main_iPhone.storyboard */,
+				96A5FC721973696C00890A20 /* LDPCGenerator.h */,
+				96A5FC731973696C00890A20 /* LDPCGenerator.mm */,
+				96A5FC751973706E00890A20 /* BSPKViewController.h */,
+				96A5FC761973706E00890A20 /* BSPKViewController.mm */,
 				96126897195A77C2000C6CBB /* ViewController.h */,
 				96126898195A77C2000C6CBB /* ViewController.m */,
 				9612689A195A77C2000C6CBB /* Images.xcassets */,
 				96126886195A77C2000C6CBB /* Supporting Files */,
-				96CF6E9119626C6700AC9289 /* test.cpp */,
 			);
 			path = SoundHandShake;
 			sourceTree = "<group>";
@@ -231,6 +249,7 @@
 				96685CE8195BBAD800BC5EDA /* ToneGenerator.m */,
 				96685CEB195BC1C300BC5EDA /* SoundPreference.h */,
 				96685CEC195BC1C300BC5EDA /* SoundPreference.m */,
+				96EAB2FE196F70BB00FA00F5 /* AMConstants.h */,
 			);
 			name = SoundGeneration;
 			sourceTree = "<group>";
@@ -337,13 +356,16 @@
 			files = (
 				96EC1BE7195AB04D002E56FB /* MHAudioBufferPlayer.m in Sources */,
 				96685CE9195BBAD800BC5EDA /* ToneGenerator.m in Sources */,
+				96EAB2FC196F706500FA00F5 /* AMPlayer.mm in Sources */,
+				96A5FC771973706E00890A20 /* BSPKViewController.mm in Sources */,
 				96EC1BE4195AB042002E56FB /* Synth.m in Sources */,
 				961268C2195A7C70000C6CBB /* CAXException.cpp in Sources */,
 				961268BD195A7B3D000C6CBB /* RIOInterface.mm in Sources */,
-				96CF6E9219626C6700AC9289 /* test.cpp in Sources */,
 				96126899195A77C2000C6CBB /* ViewController.m in Sources */,
 				96126890195A77C2000C6CBB /* AppDelegate.mm in Sources */,
+				96EAB2FD196F706500FA00F5 /* AMRecorder.mm in Sources */,
 				9612688C195A77C2000C6CBB /* main.m in Sources */,
+				96A5FC741973696C00890A20 /* LDPCGenerator.mm in Sources */,
 				961268CD195A7D8F000C6CBB /* CADebugPrintf.cpp in Sources */,
 				96685CED195BC1C300BC5EDA /* SoundPreference.m in Sources */,
 				961268BC195A7B3D000C6CBB /* KeyHelper.m in Sources */,

@@ -9,84 +9,83 @@
 #import "AppDelegate.h"
 #import <AVFoundation/AVFoundation.h>
 #import "SoundPreference.h"
-#import <itpp/itcomm.h>
-#import <itpp/base/math/elem_math.h>
-#import <sstream>
-
-using namespace itpp;
-using namespace std;
+#import "LDPCGenerator.h"
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{
-        // only need 112 bit for 14 ascii character
-        LDPC_Parity_Irregular H;
-        H.generate(224,
-                   "0 0.27684 0.28342 0 0 0 0 0 0.43974",
-                   "0 0 0 0 0 0.01568 0.85244 0.13188",
-                   "rand",   // random unstructured matrix
-                   "500 8"); // optimize girth
-        LDPC_Generator_Systematic G(&H);
-        LDPC_Code C(&H, &G);
-        C.set_exit_conditions(2500);
-//        C.set_llrcalc(LLR_calc_unit(12,0,7));
-        NSLog(@"code generated completed\n");
-        {
-            bvec InData = zeros_b(112);
-            NSLog(@"%i",InData.length());
-    //        NSString *input = @"ab123456789012";
-            char input[] = "ab123987564912";
-            for(int i = 0; i < 14; i++) {
-                char c = input[i];
-                for(int bitIndex = 0; bitIndex < 8; bitIndex++) {
-                    InData.set(i*8+bitIndex, bin((c >> abs(bitIndex-7)) & 1));
-                }
-            }
-            bvec outData = C.encode(InData);
-    //        G.encode(InData,outData);
-//            cout << InData << endl;
-//            cout << outData << endl;
-            
-            BPSK Mod;
-            vec s = Mod.modulate_bits(outData);
-            // create noise
-            vec EbN0db = "0.6:0.2:5";
-            QLLRvec llr;
-            for(int n = 0; n < length(EbN0db); n++) {
-                double N0 = pow(10.0, -EbN0db(1) / 10.0) / C.get_rate();
-                NSLog(@"error rate %f",N0);
-                AWGN_Channel chan(N0 / 2);
-                vec x = chan(s);
-                vec softbits = Mod.demodulate_soft_bits(x, N0);
-                // Decode the received bits
-//                llr = C.get_llrcalc().to_qllr(softbits);
-                int it = C.bp_decode(C.get_llrcalc().to_qllr(softbits), llr);
-                if(it >= 0) {
-                    NSLog(@"used %i iteration on %i",it,n);
-                    break;
-                } else {
-                    llr.clear();
-                }
-                NSLog(@"used %i iteration on %i",it,n);
-            }
-            
-            cout << llr.length() << endl;
-            bvec answer = llr.get(0, 111) < 0;
-            cout << answer << endl;
-            char *final = (char*)calloc(14,sizeof(char));
-            for(int i = 0; i < 14; i++) {
-                for(int bitIndex = 0; bitIndex < 8; bitIndex++) {
-                    bin b = answer.get(i*8+bitIndex);
-                    if(b == 1) {
-                        final[i] |= 1 << abs(bitIndex-7);
-                    }
-                }
-            }
-            cout << final << endl;
-        }
-        
+    unsigned int codebitcount = MAXCODECHARACTER * BYTEPERCHARACTER * 8;
+    [[LDPCGenerator sharedGenerator] setup: codebitcount];
+    return YES;
+}
+//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{
+//        // only need 112 bit for 14 ascii character
+//        LDPC_Parity_Irregular H;
+//        H.generate(224,
+//                   "0 0.27684 0.28342 0 0 0 0 0 0.43974",
+//                   "0 0 0 0 0 0.01568 0.85244 0.13188",
+//                   "rand",   // random unstructured matrix
+//                   "500 8"); // optimize girth
+//        LDPC_Generator_Systematic G(&H);
+//        LDPC_Code C(&H, &G);
+//        C.set_exit_conditions(2500);
+////        C.set_llrcalc(LLR_calc_unit(12,0,7));
+//        NSLog(@"code generated completed\n");
+//        {
+//            bvec InData = zeros_b(112);
+//            NSLog(@"%i",InData.length());
+//    //        NSString *input = @"ab123456789012";
+//            char input[] = "ab123987564912";
+//            for(int i = 0; i < 14; i++) {
+//                char c = input[i];
+//                for(int bitIndex = 0; bitIndex < 8; bitIndex++) {
+//                    InData.set(i*8+bitIndex, bin((c >> abs(bitIndex-7)) & 1));
+//                }
+//            }
+//            bvec outData = C.encode(InData);
+//    //        G.encode(InData,outData);
+////            cout << InData << endl;
+////            cout << outData << endl;
+//            
+//            BPSK Mod;
+//            vec s = Mod.modulate_bits(outData);
+//            // create noise
+//            vec EbN0db = "0.6:0.2:5";
+//            QLLRvec llr;
+//            for(int n = 0; n < length(EbN0db); n++) {
+//                double N0 = pow(10.0, -EbN0db(1) / 10.0) / C.get_rate();
+//                NSLog(@"error rate %f",N0);
+//                AWGN_Channel chan(N0 / 2);
+//                vec x = chan(s);
+//                vec softbits = Mod.demodulate_soft_bits(x, N0);
+//                // Decode the received bits
+////                llr = C.get_llrcalc().to_qllr(softbits);
+//                int it = C.bp_decode(C.get_llrcalc().to_qllr(softbits), llr);
+//                if(it >= 0) {
+//                    NSLog(@"used %i iteration on %i",it,n);
+//                    break;
+//                } else {
+//                    llr.clear();
+//                }
+//                NSLog(@"used %i iteration on %i",it,n);
+//            }
+//            
+//            cout << llr.length() << endl;
+//            bvec answer = llr.get(0, 111) < 0;
+//            cout << answer << endl;
+//            char *final = (char*)calloc(14,sizeof(char));
+//            for(int i = 0; i < 14; i++) {
+//                for(int bitIndex = 0; bitIndex < 8; bitIndex++) {
+//                    bin b = answer.get(i*8+bitIndex);
+//                    if(b == 1) {
+//                        final[i] |= 1 << abs(bitIndex-7);
+//                    }
+//                }
+//            }
+//            cout << final << endl;
+//        }
+    
         
         
 //        int64_t Nbits = 5000LL; // maximum number of bits simulated
@@ -151,7 +150,7 @@ using namespace std;
 //        }
         
         
-    });
+//    });
     
     
 //    //Scalars and vectors:
@@ -183,9 +182,9 @@ using namespace std;
 //    NSLog(@"code length %i",decoded_bits.length());
 //    berc.count(uncoded_bits, decoded_bits);
 //    NSLog(@"The bit error probability after decoding is %f correct: %f total: %f", berc.get_errorrate(), berc.get_corrects(), berc.get_total_bits());
-    return YES;
-}
-							
+//    return YES;
+//}
+
 - (void)applicationWillResignActive:(UIApplication *)application
 {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
@@ -205,7 +204,7 @@ using namespace std;
     NSError	*err = nil;
     AVAudioSession *session = [AVAudioSession sharedInstance];
     [session setPreferredSampleRate: APP_SAMPLERATE error: &err];
-    [session setCategory:AVAudioSessionCategoryPlayback error:&err];
+    [session setCategory:AVAudioSessionCategoryPlayAndRecord error:&err];
     [session setActive:YES error:&err];
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
 }
