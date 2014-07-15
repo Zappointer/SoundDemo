@@ -15,8 +15,8 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    unsigned int codebitcount = MAXCODECHARACTER * BYTEPERCHARACTER * 8;
-    [[LDPCGenerator sharedGenerator] setup: codebitcount];
+    [LDPCGenerator sharedGenerator].characterLength = 1;
+    [[LDPCGenerator sharedGenerator] setup];
     return YES;
 }
 //    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),^{

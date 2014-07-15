@@ -20,8 +20,9 @@ using namespace itpp;
 }
 
 + (instancetype) sharedGenerator;
-- (void) setup:(int)totalbits;
+- (void) setup;
 
+@property (nonatomic,assign) int characterLength;
 @property (nonatomic,assign) BOOL ready;
 
 @end

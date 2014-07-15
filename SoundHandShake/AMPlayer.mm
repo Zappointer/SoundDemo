@@ -42,31 +42,70 @@ void HandleOutputBuffer(void * inUserData,
 
 	AUDIO_CHANNEL_TYPE * buffer = (AUDIO_CHANNEL_TYPE *)inBuffer->mAudioData;
 
-    printf("playing from : %1.5f (#%lld)\n", pPlayState->mCurrentPacket/(float)SR, pPlayState->mCurrentPacket);
-    printf("message length: %d samples\n", pPlayState->mMessageLength);
-    const double amplitude = 1;
+//    printf("playing from : %1.5f (#%lld)\n", pPlayState->mCurrentPacket/(float)SR, pPlayState->mCurrentPacket);
+//    printf("message length: %d samples\n", (unsigned int)pPlayState->mMessageLength);
+    const double amplitude = 2;
     const double TWOPI = 2.0*M_PI;
+    const double secondPerCode = 0.1;
+    const UInt32 framesPerCode = SR*secondPerCode;
+    
+//    double step = SR/freq;
+
+    UInt32 size = pPlayState->bufferByteSize/sizeof(AUDIO_CHANNEL_TYPE);
+    UInt32 mul = 0;
+//    int framestep = ceil_i(step);
+    UInt32 frameCounter = pPlayState->mMessageIndexFrameCount;
+    int index = pPlayState->mMessageIndex;
+    char value = 0;
+    if(index == -1) {
+        value = 2;
+    } else {
+        value = pPlayState->mMessage[index];
+    }
     double freq = 18000.0;
-    double step = SR/freq;
-    double single_theta = TWOPI * freq / SR;
+    double single_theta1 = TWOPI * freq / SR;
     double freq2 = 19000.0;
     double single_theta2 = TWOPI * freq2 / SR;
-    double step2 = SR/freq2;
-    UInt32 size = pPlayState->bufferByteSize/sizeof(AUDIO_CHANNEL_TYPE);
-    int mul = 0;
-    int framestep = ceil_i(step);
+    double freq3 = 18500.0;
+    double single_theta3 = TWOPI * freq3 / SR;
+    double single_theta = single_theta1;
+    if(value == 0) {
+        single_theta = single_theta1;
+    } else if(value == 1) {
+        single_theta = single_theta2;
+    } else {
+        single_theta = single_theta3;
+    }
+    
     for(UInt32 frame = 0; frame < size; frame++) {
-        double mod = single_theta;
-        if(pPlayState->mMessage[(frame/framestep)] == -1) {
-            mod = single_theta2;
+        if(frameCounter > framesPerCode) {
+            frameCounter = 0;
+            index++;
+            if(index >= pPlayState->mMessageLength) {
+                index = -1;
+                pPlayState->mMessageSentCounter++;
+            }
+            if(index == -1) {
+                value = 2;
+            } else {
+                value = pPlayState->mMessage[index];
+            }
+            if(value == 0) {
+                single_theta = single_theta1;
+            } else if(value == 1) {
+                single_theta = single_theta2;
+            } else {
+                single_theta = single_theta3;
+            }
         }
-        double theta = mod * frame;
+        double theta = single_theta * frame;
         if (theta > TWOPI) {
             mul = theta / TWOPI;
             theta = theta - mul * TWOPI;
         }
         
-        buffer[frame] = (AUDIO_CHANNEL_TYPE)sin(theta) * 2;
+        buffer[frame] = (AUDIO_CHANNEL_TYPE)sin(theta) * amplitude;
+        frameCounter++;
 //        double theta = single_theta * frame;
 //        if (theta > TWOPI) {
 //            mul = theta / TWOPI;
@@ -81,6 +120,13 @@ void HandleOutputBuffer(void * inUserData,
 //        mul = 0;
         //        printf("%ld %f %ld\n",frame, theta, mul);
     }
+    
+
+//    printf("sent %i completed messages, sending #%i message\n", (unsigned int)pPlayState->mMessageSentCounter, (unsigned int)pPlayState->mMessageSentCounter);
+
+//    printf("used up to %i\n", (unsigned int)index);
+    pPlayState->mMessageIndex = index;
+    pPlayState->mMessageIndexFrameCount = frameCounter;
     
 //	for(SInt64 i = pPlayState->mCurrentPacket; i < pPlayState->mCurrentPacket + numPackets; i++) {
 ////        long idx = i % pPlayState->mMessageLength;
@@ -120,6 +166,9 @@ void HandleOutputBuffer(void * inUserData,
 
     [self _setupAudioFormat];
     _playState.mCurrentPacket = 0;
+    _playState.mMessageIndex = -1;
+    _playState.mMessageIndexFrameCount = 0;
+    _playState.mMessageSentCounter = 0;
 
     [self _encodeMessageflat: message];
 //    [self _encodeMessage:message];
@@ -135,7 +184,7 @@ void HandleOutputBuffer(void * inUserData,
                                 0,
                                 &_playState.mQueue);
 
-    NSAssert(noErr == status, @"Count not create queue.");
+    NSAssert(noErr == status, @"Could not create queue.");
 
     _playState.mIsRunning = YES;
     for (int i = 0; i < kNumberBuffers; i++) {
@@ -181,7 +230,6 @@ void HandleOutputBuffer(void * inUserData,
 }
 
 - (void)_encodeMessageflat:(NSString *)message {
-    message = @"ab123456789012";
     const char * estr = [message cStringUsingEncoding:NSASCIIStringEncoding];
     bvec strVec = zeros_b(message.length * 8);
     for(int i = 0; i < message.length; i++) {
@@ -195,14 +243,14 @@ void HandleOutputBuffer(void * inUserData,
     if([LDPCGenerator sharedGenerator].ready) {
         bvec ldpcVec = [LDPCGenerator sharedGenerator]->C.encode(strVec);
         NSLog(@"ldpc encoded");
-//        cout << ldpcVec << endl;
+        cout << ldpcVec << endl;
         int encodedLength = ldpcVec.length();
         char *bpsk = (char *)calloc(encodedLength * SAMPLE_PER_BIT, sizeof(char));
-        BPSK Mod;
-        vec s = Mod.modulate_bits(ldpcVec);
+//        BPSK Mod;
+//        vec s = Mod.modulate_bits(ldpcVec);
         for (int i = 0; i < encodedLength; i++) {
             for (int j = 0; j < SAMPLE_PER_BIT; j++) {
-                bpsk[i*SAMPLE_PER_BIT+j] = s.get(i);
+                bpsk[i*SAMPLE_PER_BIT+j] = (short)ldpcVec.get(i);
             }
         }
 //        Mod.demodulate_soft_bits(s);

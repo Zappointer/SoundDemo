@@ -22,11 +22,14 @@ typedef struct {
     UInt32 mNumPacketsToRead;
     UInt32 bufferByteSize;
     bool mIsRunning;
-//    const float* mMessage2;
     const char * mMessage;
+    int mMessageIndex;
     UInt32 mMessageLength;
+    UInt32 mMessageIndexFrameCount;
+    UInt32 mMessageSentCounter;
     float mTheta;
     __unsafe_unretained id mSelf;
+
 } AQPlayState;
 
 @interface AMPlayer : NSObject

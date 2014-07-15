@@ -9,8 +9,9 @@
 #import "BSPKViewController.h"
 #import "AMPlayer.h"
 #import "AMRecorder.h"
+#import "LDPCGenerator.h"
 
-@interface BSPKViewController () <RecorderDelegate>
+@interface BSPKViewController () <RecorderDelegate, UITextFieldDelegate>
 
 @property (nonatomic,strong) AMRecorder *bspkRecorder;
 @property (nonatomic,strong) AMPlayer *bspkPlayer;
@@ -20,6 +21,7 @@
 @property (nonatomic,strong) IBOutlet UIButton *stopButton;
 @property (nonatomic,strong) IBOutlet UIButton *listenButton;
 @property (nonatomic,strong) IBOutlet UILabel *listenStatusLabel;
+@property (nonatomic,strong) IBOutlet UILabel *foundDecodeLabel;
 
 @end
 
@@ -43,7 +45,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.listenStatusLabel.text = @"Not Listening";
-    self.textField.text = @"ab123456789012";
+    self.textField.text = @"12";
+    self.textField.delegate = self;
 }
 
 - (IBAction) sendMessage:(id)sender {
@@ -51,7 +54,7 @@
         NSAssert(true, @"should never get here");
         return;
     }
-    if(self.textField.text.length > 0 && self.textField.text.length <= MAXCODECHARACTER) {
+    if(self.textField.text.length > 0 && self.textField.text.length <= [LDPCGenerator sharedGenerator].characterLength) {
         [self.bspkPlayer play: self.textField.text];
         self.sendButton.enabled = NO;
         self.statusLabel.text = [NSString stringWithFormat: @"sending %@",self.textField.text];
@@ -78,6 +81,15 @@
 
 - (void) frequencyDetected:(CGFloat)frequency {
     self.listenStatusLabel.text = [@(frequency) stringValue];
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    [textField resignFirstResponder];
+    return YES;
+}
+
+- (void) decodedStringFound:(NSString *) string {
+    self.foundDecodeLabel.text = [NSString stringWithFormat: @"Found String: %@",string];
 }
 
 @end

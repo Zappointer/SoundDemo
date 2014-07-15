@@ -12,10 +12,13 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <Accelerate/Accelerate.h>
 #include <limits.h>
+#import <itpp/itcomm.h>
+#import <itpp/base/math/elem_math.h>
 
 @protocol RecorderDelegate <NSObject>
 
 - (void) frequencyDetected:(CGFloat) frequency;
+- (void) decodedStringFound:(NSString *) string;
 
 @end
 
@@ -26,6 +29,9 @@ typedef struct {
     AudioQueueBufferRef mBuffers[kNumberBuffers];
     UInt32 bufferByteSize;
     SInt64 mCurrentPacket;
+    itpp::vec mCodeReceived;
+    int mCodeLength;
+    bool mSignalFound;
     bool mIsRunning;
 } AQRecordState;
 
@@ -52,5 +58,6 @@ typedef struct {
 - (void)startRecording;
 - (void)stopRecording;
 - (void)updateTextView;
+- (void) decode;
 
 @end

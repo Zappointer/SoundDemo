@@ -7,6 +7,9 @@
 //
 
 #import "AMRecorder.h"
+#import "LDPCGenerator.h"
+
+using namespace std;
 
 //static const bool ParityTable256[256] =
 //{
@@ -46,11 +49,16 @@ static float * barker;
 static float * fBuffer;
 static float * integral;
 static float * corr;
+static float * smallFBuffer;
+static const UInt32 fftFrame = 4096;
+static const double secondPerCode = 0.1;//SR/(double)fftFrame;
+static const UInt32 framesPerCode = SR*secondPerCode;
 
 
 void initReceiver(void) {
     long bufSize = SR;
     fBuffer = (float *)calloc(bufSize, sizeof(float));
+    smallFBuffer = (float *)calloc(framesPerCode, sizeof(float));
     integral = (float *)calloc(bufSize/SAMPLE_PER_BIT, sizeof(float));
     corr = (float *)calloc(bufSize + BARKER_LEN*SAMPLE_PER_BIT, sizeof(float));
     barker = (float *)calloc(BARKER_LEN*SAMPLE_PER_BIT, sizeof(float));
@@ -113,7 +121,7 @@ void HandleInputBuffer(void * inUserData,
     SInt64 sampleEnd = pRecordState->mCurrentPacket + inBuffer->mAudioDataByteSize / pRecordState->mDataFormat.mBytesPerPacket - 1;
 //    short * samples = (short *)inBuffer->mAudioData;
     SInt64 nsamples = sampleEnd - sampleStart + 1;
-    printf("%lld %lld %lld\n", sampleStart, sampleEnd,nsamples);
+//    printf("%lld %lld %lld\n", sampleStart, sampleEnd,nsamples);
     SInt16 * samples = (SInt16 *)inBuffer->mAudioData;
     
     /*************** FFT ***************/
@@ -123,35 +131,119 @@ void HandleInputBuffer(void * inUserData,
      Then call the transformation function vDSP_ctoz to get a split complex
      vector, which for a real signal, divides into an even-odd configuration.
      */
-    vDSP_ctoz((COMPLEX*)fBuffer, 2, &A, 1, nOver2);
-    
-    // Carry out a Forward FFT transform.
-    vDSP_fft_zrip(fftSetup, &A, stride, log2n, FFT_FORWARD);
-    
-    // The output signal is now in a split real form. Use the vDSP_ztoc to get
-    // a split real vector.
-    vDSP_ztoc(&A, 1, (COMPLEX *)fBuffer, 2, nOver2);
-    
-    // Determine the dominant frequency by taking the magnitude squared and
-    // saving the bin which it resides in.
-    float dominantFrequency = 0;
-    int bin = -1;
-    for (int i=0; i<n; i+=2) {
-        float curFreq = MagnitudeSquared2(fBuffer[i], fBuffer[i+1]);
-        if (curFreq > dominantFrequency) {
-            dominantFrequency = curFreq;
-            bin = (i+1)/2;
+    UInt64 codeFrames = nsamples / (UInt64)framesPerCode;
+    for(int codeFrameIndex = 0; codeFrameIndex < codeFrames; codeFrameIndex++) {
+        memcpy(smallFBuffer, fBuffer+(codeFrameIndex*framesPerCode), framesPerCode*sizeof(float));
+//        int bufferIndex = framesPerCode;
+//        int frameleft = fftFrame - framesPerCode;
+//        while(frameleft > 0) {
+//            int copySize = framesPerCode;
+//            if(frameleft < copySize) {
+//                copySize = frameleft;
+//            }
+//            int add = (128-frameleft);
+//            memcpy(smallFBuffer+add,smallFBuffer,copySize*sizeof(float));
+//            frameleft = frameleft - framesPerCode;
+//        }
+        vDSP_ctoz((COMPLEX*)smallFBuffer, 2, &A, 1, nOver2);
+        vDSP_fft_zrip(fftSetup, &A, stride, log2n, FFT_FORWARD);
+        vDSP_ztoc(&A, 1, (COMPLEX *)smallFBuffer, 2, nOver2);
+        float dominantFrequency = 0;
+        int bin = -1;
+        for (int i=0; i<n; i+=2) {
+            float curFreq = MagnitudeSquared2(smallFBuffer[i], smallFBuffer[i+1]);
+            if (curFreq > dominantFrequency) {
+                dominantFrequency = curFreq;
+                bin = (i+1)/2;
+            }
         }
+        float frequency = bin*((double)SR/recorder->bufferCapacity);
+        dispatch_async(dispatch_get_main_queue(),^{
+            recorder.frequency = frequency;
+        });
+        if(!pRecordState->mSignalFound && frequency > 18400 && frequency < 18600) {
+            pRecordState->mSignalFound = true;
+            pRecordState->mCodeReceived.clear();
+            pRecordState->mCodeLength = 0;
+            printf("found start decoding\n");
+        } else {
+            if(pRecordState->mSignalFound) {
+                if(frequency > 18400 && frequency < 18600) {
+                    
+                }else if(frequency > 17900 && frequency < 18100) {
+                    pRecordState->mCodeReceived.set(pRecordState->mCodeLength, 1.0);
+                    pRecordState->mCodeLength++;
+                } else if(frequency > 18900 && frequency < 19100) {
+                    pRecordState->mCodeReceived.set(pRecordState->mCodeLength, -1.0);
+                    pRecordState->mCodeLength++;
+                } else {
+                    pRecordState->mCodeReceived.set(pRecordState->mCodeLength, (arc4random()/(double)UINT_FAST32_MAX)*2-1);
+                }
+                if(pRecordState->mCodeLength == [LDPCGenerator sharedGenerator].characterLength * 8 * 2) {
+                    cout << pRecordState->mCodeReceived << endl;
+                    [recorder decode];
+                }
+            }
+        }
+        
     }
     
-    recorder.frequency = bin*((double)SR/recorder->bufferCapacity);
-    printf("Dominant frequency: %f %f bin: %d \n", dominantFrequency, bin*((double)SR/recorder->bufferCapacity),bin);
+//    vec softbits = Mod.demodulate_soft_bits(x, N0);
+    // Decode the received bits
+    
+//    vDSP_ctoz((COMPLEX*)fBuffer, 2, &A, 1, nOver2);
+//    
+//    // Carry out a Forward FFT transform.
+//    vDSP_fft_zrip(fftSetup, &A, stride, log2n, FFT_FORWARD);
+//    
+//    // The output signal is now in a split real form. Use the vDSP_ztoc to get
+//    // a split real vector.
+//    vDSP_ztoc(&A, 1, (COMPLEX *)fBuffer, 2, nOver2);
+//    
+//    // Determine the dominant frequency by taking the magnitude squared and
+//    // saving the bin which it resides in.
+//    float dominantFrequency = 0;
+//    int bin = -1;
+//    for (int i=0; i<n; i+=2) {
+//        float curFreq = MagnitudeSquared2(fBuffer[i], fBuffer[i+1]);
+//        if (curFreq > dominantFrequency) {
+//            dominantFrequency = curFreq;
+//            bin = (i+1)/2;
+//        }
+//    }
+//    
+//    recorder.frequency = bin*((double)SR/recorder->bufferCapacity);
+//    
+//    if(!pRecordState->mSignalFound && recorder.frequency > 18400 && recorder.frequency < 18600) {
+//        pRecordState->mSignalFound = true;
+//        pRecordState->mCodeReceived.clear();
+//        pRecordState->mCodeLength = 0;
+//        printf("found start decoding\n");
+//    } else {
+//        if(pRecordState->mSignalFound) {
+//            if(recorder.frequency > 18400 && recorder.frequency < 18600) {
+//                
+//            }else if(recorder.frequency > 17900 && recorder.frequency < 18100) {
+//                pRecordState->mCodeReceived.set(pRecordState->mCodeLength, 1.0);
+//                pRecordState->mCodeLength++;
+//            } else if(recorder.frequency > 18900 && recorder.frequency < 19100) {
+//                pRecordState->mCodeReceived.set(pRecordState->mCodeLength, -1.0);
+//                pRecordState->mCodeLength++;
+//            } else {
+//                pRecordState->mCodeReceived.set(pRecordState->mCodeLength, (arc4random()/(double)UINT_FAST32_MAX)*2-1);
+//            }
+//            if(pRecordState->mCodeLength == [LDPCGenerator sharedGenerator].characterLength * 8 * 2) {
+//                cout << pRecordState->mCodeReceived << endl;
+//                [recorder decode];
+//            }
+//        }
+//    }
+    
+//    printf("Dominant frequency: %f %f bin: %d \n", dominantFrequency, bin*((double)SR/recorder->bufferCapacity),bin);
     
     AudioQueueEnqueueBuffer(pRecordState->mQueue, inBuffer, 0, NULL);
     pRecordState->mCurrentPacket += inNumPackets;
 }
-
-
 
 //void HandleInputBuffer(void * inUserData,
 //                       AudioQueueRef inAQ,
@@ -342,12 +434,44 @@ void HandleInputBuffer(void * inUserData,
     return self;
 }
 
+- (void) decode {
+    QLLRvec llr;
+//    BPSK Mod;
+//    vec softbits = Mod.demodulate_soft_bits(_recordState.mCodeReceived, 0);
+//    [LDPCGenerator sharedGenerator]->C.decode(_recordState->mCodeReceived);
+    int it = [LDPCGenerator sharedGenerator]->C.bp_decode([LDPCGenerator sharedGenerator]->C.get_llrcalc().to_qllr(_recordState.mCodeReceived), llr);
+    if(it >= 1) {
+//        bvec bitsout = llr < 0;
+        bvec answer = llr.get(0, [LDPCGenerator sharedGenerator].characterLength*8-1) < 0;
+        cout << answer << endl;
+        char *final = (char*)calloc([LDPCGenerator sharedGenerator].characterLength,sizeof(char));
+        for(int i = 0; i < [LDPCGenerator sharedGenerator].characterLength; i++) {
+            for(int bitIndex = 0; bitIndex < 8; bitIndex++) {
+                bin b = answer.get(i*8+bitIndex);
+                if(b == 1) {
+                    final[i] |= 1 << abs(bitIndex-7);
+                }
+            }
+        }
+        if(self.delegate) {
+            [self.delegate decodedStringFound: [NSString stringWithCString: final encoding: NSASCIIStringEncoding]];
+        }
+
+    } else {
+        NSLog(@"tried decoding but failed");
+        llr.clear();
+    }
+    _recordState.mCodeLength = 0;
+    _recordState.mCodeReceived.clear();
+    _recordState.mSignalFound = false;
+}
+
 - (void)dealloc {
     AudioQueueDispose(_recordState.mQueue, true);
 }
 
 - (void)realFFTSetup {
-    UInt32 maxFrames = 1024;
+    UInt32 maxFrames = fftFrame;
     dataBuffer = (void*)malloc(maxFrames * sizeof(SInt16));
     outputBuffer = (float*)malloc(maxFrames *sizeof(float));
     log2n = log2f(maxFrames);
@@ -362,9 +486,13 @@ void HandleInputBuffer(void * inUserData,
 }
 
 - (void)startRecording {
+    NSAssert(framesPerCode > fftFrame, @"not enought fft frame to detect frequency per signal");
     [self _setupAudioFormat];
     _recordState.mCurrentPacket = 0;
     _recordState.mSelf = self;
+    _recordState.mSignalFound = false;
+    _recordState.mCodeReceived = zeros([LDPCGenerator sharedGenerator]->C.get_nvar());
+    _recordState.mCodeLength = 0;
     initReceiver();
 
     OSStatus status = noErr;
@@ -440,7 +568,7 @@ void HandleInputBuffer(void * inUserData,
         AudioQueueGetProperty(_recordState.mQueue, kAudioQueueProperty_MaximumOutputPacketSize, &maxPacketSize, &maxVBRPacketSize);
     }
 
-    Float64 numBytesForTime = round(_recordState.mDataFormat.mSampleRate * maxPacketSize * seconds);
+    Float64 numBytesForTime = std::round(_recordState.mDataFormat.mSampleRate * maxPacketSize * seconds);
     _recordState.bufferByteSize = (UInt32) MIN(numBytesForTime, maxBufferSize);
 }
 
