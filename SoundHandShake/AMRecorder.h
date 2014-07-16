@@ -35,6 +35,7 @@ typedef struct {
     int mCodeLength;
     bool mSignalFound;
     bool mIsRunning;
+    double fq1,fq2,fq3;
 } AQRecordState;
 
 @interface AMRecorder : NSObject

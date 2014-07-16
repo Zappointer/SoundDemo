@@ -62,11 +62,11 @@ void HandleOutputBuffer(void * inUserData,
     } else {
         value = pPlayState->mMessage[index];
     }
-    double freq = 18000.0;
+    double freq = pPlayState->fq1;
     double single_theta1 = TWOPI * freq / SR;
-    double freq2 = 19000.0;
+    double freq2 = pPlayState->fq2;
     double single_theta2 = TWOPI * freq2 / SR;
-    double freq3 = 18500.0;
+    double freq3 = pPlayState->fq3;
     double single_theta3 = TWOPI * freq3 / SR;
     double single_theta = single_theta1;
     if(value == 0) {
@@ -103,8 +103,21 @@ void HandleOutputBuffer(void * inUserData,
             mul = theta / TWOPI;
             theta = theta - mul * TWOPI;
         }
-        
-        buffer[frame] = (AUDIO_CHANNEL_TYPE)sin(theta) * amplitude;
+
+//        if(frameCounter < 100) {
+//            buffer[frame] = (AUDIO_CHANNEL_TYPE)sin(theta) * amplitude * frame * 0.01;
+//        } else if(frameCounter > framesPerCode-60) {
+//            buffer[frame] = (AUDIO_CHANNEL_TYPE)sin(theta) * amplitude * (framesPerCode-frameCounter) * 0.01;
+//        } else {
+//            buffer[frame] = (AUDIO_CHANNEL_TYPE)sin(theta) * amplitude;
+//        }
+//        if(frameCounter < 10) {
+//            buffer[frame] = (AUDIO_CHANNEL_TYPE)sin(theta) * frameCounter * 0.1;
+//        } else if(frameCounter > framesPerCode-10) {
+//            buffer[frame] = (AUDIO_CHANNEL_TYPE)sin(theta) * (framesPerCode-frameCounter) * 0.1;
+//        } else {
+            buffer[frame] = (AUDIO_CHANNEL_TYPE)sin(theta) * amplitude;
+//        }
         frameCounter++;
 //        double theta = single_theta * frame;
 //        if (theta > TWOPI) {
@@ -165,6 +178,9 @@ void HandleOutputBuffer(void * inUserData,
 - (void)play:(NSString *)message {
 
     [self _setupAudioFormat];
+    _playState.fq1 = [LDPCGenerator sharedGenerator].signal0Frequency;
+    _playState.fq2 = [LDPCGenerator sharedGenerator].signal1Frequency;
+    _playState.fq3 = [LDPCGenerator sharedGenerator].startSignalFrequency;
     _playState.mCurrentPacket = 0;
     _playState.mMessageIndex = -1;
     _playState.mMessageIndexFrameCount = 0;

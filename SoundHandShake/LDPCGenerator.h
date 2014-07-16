@@ -22,6 +22,9 @@ using namespace itpp;
 + (instancetype) sharedGenerator;
 - (void) setup;
 
+@property (nonatomic,assign) double signal0Frequency;
+@property (nonatomic,assign) double signal1Frequency;
+@property (nonatomic,assign) double startSignalFrequency;
 @property (nonatomic,assign) int characterLength;
 @property (nonatomic,assign) BOOL ready;
 

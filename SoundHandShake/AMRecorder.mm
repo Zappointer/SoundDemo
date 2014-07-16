@@ -43,8 +43,6 @@ static float barkerbin[BARKER_LEN] = {
     +1.0f, +1.0f, +1.0f, +1.0f, +1.0f, -1.0f, -1.0f, +1.0f, +1.0f, -1.0f, +1.0f, -1.0f, +1.0f
 };
 
-static char strbuf[BIT_RATE] = {'\n'};
-
 static float * barker;
 static float * fBuffer;
 static float * integral;
@@ -183,7 +181,7 @@ void HandleInputBuffer(void * inUserData,
         }
         float frequency = bin*((double)SR/recorder->bufferCapacity);
         [frequencies appendFormat: @" %f",frequency];
-        if(!pRecordState->mSignalFound && frequency > 18400 && frequency < 18600) {
+        if(!pRecordState->mSignalFound && frequency > pRecordState->fq3-200 && frequency < pRecordState->fq3+200) {
             pRecordState->mSignalFound = true;
             pRecordState->mCodeReceived.clear();
             pRecordState->mCodeLength = 0;
@@ -193,7 +191,7 @@ void HandleInputBuffer(void * inUserData,
             }
         } else {
             if(pRecordState->mSignalFound) {
-                if(frequency > 18300 && frequency < 18700) {
+                if(frequency > pRecordState->fq3-200 && frequency < pRecordState->fq3+200) {
                     if(pRecordState->mCodeLength > 0) {
                         pRecordState->mCodeReceived.set_subvector( 1, pRecordState->mCodeReceived);
                         pRecordState->mCodeReceived.set(0, 0.0);
@@ -207,10 +205,10 @@ void HandleInputBuffer(void * inUserData,
                         pRecordState->mCodeReceived.set(0, 0.0);
                         pRecordState->mCodeLength++;
                     }
-                }else if(frequency > 17800 && frequency < 18200) {
+                }else if(frequency > pRecordState->fq1-200 && frequency < pRecordState->fq1+200) {
                     pRecordState->mCodeReceived.set(pRecordState->mCodeLength, 1.0);
                     pRecordState->mCodeLength++;
-                } else if(frequency > 18800 && frequency < 19200) {
+                } else if(frequency > pRecordState->fq2-200 && frequency < pRecordState->fq2+200) {
                     pRecordState->mCodeReceived.set(pRecordState->mCodeLength, -1.0);
                     pRecordState->mCodeLength++;
                 } else {
@@ -582,6 +580,9 @@ void HandleInputBuffer(void * inUserData,
     [self _setupAudioFormat];
     _recordState.mCurrentPacket = 0;
     _recordState.mSelf = self;
+    _recordState.fq1 = [LDPCGenerator sharedGenerator].signal0Frequency;
+    _recordState.fq2 = [LDPCGenerator sharedGenerator].signal1Frequency;
+    _recordState.fq3 = [LDPCGenerator sharedGenerator].startSignalFrequency;
     _recordState.mSignalFound = false;
     _recordState.mCodeReceived = zeros([LDPCGenerator sharedGenerator]->C.get_nvar());
     _recordState.mCodeLength = 0;

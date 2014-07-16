@@ -27,6 +27,7 @@ typedef struct {
     UInt32 mMessageLength;
     UInt32 mMessageIndexFrameCount;
     UInt32 mMessageSentCounter;
+    double fq1,fq2,fq3;
     float mTheta;
     __unsafe_unretained id mSelf;
 
