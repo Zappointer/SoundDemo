@@ -46,7 +46,7 @@ void HandleOutputBuffer(void * inUserData,
 //    printf("message length: %d samples\n", (unsigned int)pPlayState->mMessageLength);
     const double amplitude = 2;
     const double TWOPI = 2.0*M_PI;
-    const double secondPerCode = 0.1;
+    const double secondPerCode = 0.01;
     const UInt32 framesPerCode = SR*secondPerCode;
     
 //    double step = SR/freq;
@@ -241,20 +241,33 @@ void HandleOutputBuffer(void * inUserData,
     
 //    cout << strVec << endl;
     if([LDPCGenerator sharedGenerator].ready) {
+#ifdef LDPC
         bvec ldpcVec = [LDPCGenerator sharedGenerator]->C.encode(strVec);
         NSLog(@"ldpc encoded");
         cout << ldpcVec << endl;
         int encodedLength = ldpcVec.length();
         char *bpsk = (char *)calloc(encodedLength * SAMPLE_PER_BIT, sizeof(char));
-//        BPSK Mod;
-//        vec s = Mod.modulate_bits(ldpcVec);
         for (int i = 0; i < encodedLength; i++) {
             for (int j = 0; j < SAMPLE_PER_BIT; j++) {
                 bpsk[i*SAMPLE_PER_BIT+j] = (short)ldpcVec.get(i);
             }
         }
-//        Mod.demodulate_soft_bits(s);
-//        cout << s << endl;
+#else
+        // RS encoding
+        int m = 3;                //Reed-Solomon parameter m
+        int t = 2;                //Reed-Solomon parameter t
+        Reed_Solomon rs = Reed_Solomon(m, t);
+        bvec rsVec = rs.encode(strVec);
+        cout << rsVec << endl;
+        int encodedLength = rsVec.length();
+        NSLog(@"rs encoded with length: %i", encodedLength);
+        char *bpsk = (char *)calloc(encodedLength * SAMPLE_PER_BIT, sizeof(char));
+        for (int i = 0; i < encodedLength; i++) {
+            for (int j = 0; j < SAMPLE_PER_BIT; j++) {
+                bpsk[i*SAMPLE_PER_BIT+j] = (short)rsVec.get(i);
+            }
+        }
+#endif
         _playState.mMessageLength = encodedLength * SAMPLE_PER_BIT;
         _playState.mMessage = bpsk;
 //        NSMutableString * outputString = [NSMutableString new];
@@ -262,13 +275,9 @@ void HandleOutputBuffer(void * inUserData,
 //            [outputString appendFormat: @"%1.0f ", bpsk[i]];
 //        }
 //        NSLog(@"%@",outputString);
-//        cout << s << endl;
-//        vec EbN0db = "0.6:0.2:5";
-//        double N0 = pow(10.0, -EbN0db(1) / 10.0) / [LDPCGenerator sharedGenerator]->C.get_rate();
-//
-//        AWGN_Channel chan(N0 / 2);
-//        vec x = chan(s);
-//        cout << x << endl;
+        
+        
+
     }
     
     

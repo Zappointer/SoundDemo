@@ -18,7 +18,9 @@
 @protocol RecorderDelegate <NSObject>
 
 - (void) frequencyDetected:(CGFloat) frequency;
+- (void) frequencyStringUpdated:(NSString*) frequencyString;
 - (void) decodedStringFound:(NSString *) string;
+- (void) startDecoding;
 
 @end
 
@@ -28,7 +30,7 @@ typedef struct {
     AudioQueueRef mQueue;
     AudioQueueBufferRef mBuffers[kNumberBuffers];
     UInt32 bufferByteSize;
-    SInt64 mCurrentPacket;
+    UInt32 mCurrentPacket;
     itpp::vec mCodeReceived;
     int mCodeLength;
     bool mSignalFound;
@@ -57,7 +59,7 @@ typedef struct {
 //- (IBAction)recordMessage:(id)sender;
 - (void)startRecording;
 - (void)stopRecording;
-- (void)updateTextView;
 - (void) decode;
+- (void) frequenciesUpdated:(NSString *)frequencies;
 
 @end

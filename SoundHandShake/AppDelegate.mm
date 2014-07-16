@@ -15,7 +15,7 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    [LDPCGenerator sharedGenerator].characterLength = 1;
+    [LDPCGenerator sharedGenerator].characterLength = 14;
     [[LDPCGenerator sharedGenerator] setup];
     return YES;
 }

@@ -50,8 +50,11 @@ static float * fBuffer;
 static float * integral;
 static float * corr;
 static float * smallFBuffer;
-static const UInt32 fftFrame = 4096;
-static const double secondPerCode = 0.1;//SR/(double)fftFrame;
+static SInt16 *frameBuffer;
+static SInt16 *tempSamples;
+static int frameBufferSize;
+static const UInt32 fftFrame = 256;
+static const double secondPerCode = 0.01;//SR/(double)fftFrame;
 static const UInt32 framesPerCode = SR*secondPerCode;
 
 
@@ -62,6 +65,8 @@ void initReceiver(void) {
     integral = (float *)calloc(bufSize/SAMPLE_PER_BIT, sizeof(float));
     corr = (float *)calloc(bufSize + BARKER_LEN*SAMPLE_PER_BIT, sizeof(float));
     barker = (float *)calloc(BARKER_LEN*SAMPLE_PER_BIT, sizeof(float));
+    frameBuffer = (SInt16 *)calloc(bufSize,sizeof(SInt16));
+    tempSamples = (SInt16 *)calloc(bufSize*2,sizeof(SInt16));
 
     for (int i = 0; i < BARKER_LEN; i++) {
         vDSP_vfill(barkerbin+i, barker+i*SAMPLE_PER_BIT, 1, SAMPLE_PER_BIT);
@@ -114,16 +119,34 @@ void HandleInputBuffer(void * inUserData,
         inNumPackets = inBuffer->mAudioDataByteSize / pRecordState->mDataFormat.mBytesPerPacket;
     }
 
-    if (!pRecordState->mIsRunning) {
+    if (!pRecordState->mIsRunning || inNumPackets == 0) {
         return;
     }
-    SInt64 sampleStart = pRecordState->mCurrentPacket;
-    SInt64 sampleEnd = pRecordState->mCurrentPacket + inBuffer->mAudioDataByteSize / pRecordState->mDataFormat.mBytesPerPacket - 1;
-//    short * samples = (short *)inBuffer->mAudioData;
-    SInt64 nsamples = sampleEnd - sampleStart + 1;
-//    printf("%lld %lld %lld\n", sampleStart, sampleEnd,nsamples);
-    SInt16 * samples = (SInt16 *)inBuffer->mAudioData;
+
     
+    UInt32 sampleStart = pRecordState->mCurrentPacket;
+    UInt32 sampleEnd = pRecordState->mCurrentPacket + inBuffer->mAudioDataByteSize / pRecordState->mDataFormat.mBytesPerPacket - 1;
+    UInt32 nsamples = sampleEnd - sampleStart + 1;
+    SInt16 * samples;
+    if(frameBufferSize > 0) {
+        samples = tempSamples;
+        memcpy(samples,frameBuffer,frameBufferSize*sizeof(SInt16));
+        memcpy(samples+frameBufferSize,inBuffer->mAudioData,nsamples*sizeof(SInt16));
+        nsamples += frameBufferSize;
+        frameBufferSize = 0;
+    } else {
+        samples = (SInt16 *)inBuffer->mAudioData;
+    }
+    UInt64 codeFrames = nsamples / (UInt64)framesPerCode;
+    UInt32 trimSize = nsamples % framesPerCode;
+    nsamples -= trimSize;
+    if(trimSize > 0) {
+        memcpy(frameBuffer,samples+(codeFrames*framesPerCode),trimSize*sizeof(SInt16));
+        frameBufferSize = trimSize;
+    } else {
+        frameBufferSize = 0;
+    }
+//    printf("%ld %ld %ld buffered with %d\n", sampleStart, sampleEnd,nsamples,frameBufferSize);
     /*************** FFT ***************/
     ConvertInt16ToFloat(pRecordState, samples, fBuffer, (size_t)nsamples);
     /**
@@ -131,7 +154,8 @@ void HandleInputBuffer(void * inUserData,
      Then call the transformation function vDSP_ctoz to get a split complex
      vector, which for a real signal, divides into an even-odd configuration.
      */
-    UInt64 codeFrames = nsamples / (UInt64)framesPerCode;
+    NSMutableString *frequencies = [NSMutableString new];
+    
     for(int codeFrameIndex = 0; codeFrameIndex < codeFrames; codeFrameIndex++) {
         memcpy(smallFBuffer, fBuffer+(codeFrameIndex*framesPerCode), framesPerCode*sizeof(float));
 //        int bufferIndex = framesPerCode;
@@ -158,28 +182,48 @@ void HandleInputBuffer(void * inUserData,
             }
         }
         float frequency = bin*((double)SR/recorder->bufferCapacity);
-        dispatch_async(dispatch_get_main_queue(),^{
-            recorder.frequency = frequency;
-        });
+        [frequencies appendFormat: @" %f",frequency];
         if(!pRecordState->mSignalFound && frequency > 18400 && frequency < 18600) {
             pRecordState->mSignalFound = true;
             pRecordState->mCodeReceived.clear();
             pRecordState->mCodeLength = 0;
             printf("found start decoding\n");
+            if(recorder.delegate) {
+                [recorder.delegate startDecoding];
+            }
         } else {
             if(pRecordState->mSignalFound) {
-                if(frequency > 18400 && frequency < 18600) {
-                    
-                }else if(frequency > 17900 && frequency < 18100) {
+                if(frequency > 18300 && frequency < 18700) {
+                    if(pRecordState->mCodeLength > 0) {
+                        pRecordState->mCodeReceived.set_subvector( 1, pRecordState->mCodeReceived);
+                        pRecordState->mCodeReceived.set(0, 0.0);
+                        pRecordState->mCodeLength++;
+                        if(pRecordState->mCodeLength >= [LDPCGenerator sharedGenerator].characterLength * 8 * 2) {
+                            cout << pRecordState->mCodeReceived << endl;
+                            [recorder decode];
+                            pRecordState->mSignalFound = true;
+                        }
+                    } else {
+                        pRecordState->mCodeReceived.set(0, 0.0);
+                        pRecordState->mCodeLength++;
+                    }
+                }else if(frequency > 17800 && frequency < 18200) {
                     pRecordState->mCodeReceived.set(pRecordState->mCodeLength, 1.0);
                     pRecordState->mCodeLength++;
-                } else if(frequency > 18900 && frequency < 19100) {
+                } else if(frequency > 18800 && frequency < 19200) {
                     pRecordState->mCodeReceived.set(pRecordState->mCodeLength, -1.0);
                     pRecordState->mCodeLength++;
                 } else {
-                    pRecordState->mCodeReceived.set(pRecordState->mCodeLength, (arc4random()/(double)UINT_FAST32_MAX)*2-1);
+                    pRecordState->mCodeReceived.set(pRecordState->mCodeLength, 1.0);//(arc4random()/(double)UINT_FAST32_MAX)*2-1);
+                    pRecordState->mCodeLength++;
                 }
-                if(pRecordState->mCodeLength == [LDPCGenerator sharedGenerator].characterLength * 8 * 2) {
+                printf(".");
+//                printf(" %i ",pRecordState->mCodeLength);
+#ifdef LDPC
+                if(pRecordState->mCodeLength >= [LDPCGenerator sharedGenerator].characterLength * 8 * 2) {
+#else
+                if(pRecordState->mCodeLength == 252) {
+#endif
                     cout << pRecordState->mCodeReceived << endl;
                     [recorder decode];
                 }
@@ -187,6 +231,8 @@ void HandleInputBuffer(void * inUserData,
         }
         
     }
+    
+    [recorder frequenciesUpdated: frequencies];
     
 //    vec softbits = Mod.demodulate_soft_bits(x, N0);
     // Decode the received bits
@@ -435,13 +481,14 @@ void HandleInputBuffer(void * inUserData,
 }
 
 - (void) decode {
+#ifdef LDPC
     QLLRvec llr;
 //    BPSK Mod;
 //    vec softbits = Mod.demodulate_soft_bits(_recordState.mCodeReceived, 0);
 //    [LDPCGenerator sharedGenerator]->C.decode(_recordState->mCodeReceived);
     int it = [LDPCGenerator sharedGenerator]->C.bp_decode([LDPCGenerator sharedGenerator]->C.get_llrcalc().to_qllr(_recordState.mCodeReceived), llr);
     if(it >= 1) {
-//        bvec bitsout = llr < 0;
+        bvec bitsout = llr < 0;
         bvec answer = llr.get(0, [LDPCGenerator sharedGenerator].characterLength*8-1) < 0;
         cout << answer << endl;
         char *final = (char*)calloc([LDPCGenerator sharedGenerator].characterLength,sizeof(char));
@@ -453,14 +500,59 @@ void HandleInputBuffer(void * inUserData,
                 }
             }
         }
+        NSLog(@"%i", it);
+        NSLog(@"answer = %@", [NSString stringWithCString: final encoding: NSASCIIStringEncoding]);
         if(self.delegate) {
             [self.delegate decodedStringFound: [NSString stringWithCString: final encoding: NSASCIIStringEncoding]];
         }
 
     } else {
-        NSLog(@"tried decoding but failed");
+        NSLog(@"tried decoding but failed with %i", it);
+        if(self.delegate) {
+            [self.delegate decodedStringFound: @"decode failed"];
+        }
         llr.clear();
+//        vec temp = zeros(_recordState.mCodeLength);
+//        temp.set_subvector(0, _recordState.mCodeReceived);
+//        temp.set(0,1);
+//        it = [LDPCGenerator sharedGenerator]->C.bp_decode([LDPCGenerator sharedGenerator]->C.get_llrcalc().to_qllr(temp), llr);
+//        vec temp2 = zeros(_recordState.mCodeLength);
+//        temp2.set_subvector(0, _recordState.mCodeReceived);
+//        temp2.set(0,-1);
+//        int it2 = [LDPCGenerator sharedGenerator]->C.bp_decode([LDPCGenerator sharedGenerator]->C.get_llrcalc().to_qllr(temp), llr);
+//        if(it >= 1 || it2 >= 1) {
+//            NSLog(@"shift worked");
+//        }
+        frameBufferSize = 0;
     }
+#else
+    int m = 3;                //Reed-Solomon parameter m
+    int t = 2;                //Reed-Solomon parameter t
+    Reed_Solomon rs = Reed_Solomon(m, t);
+    bvec bout = zeros_b(_recordState.mCodeLength);
+    for(int i = 0; i < _recordState.mCodeLength; i++) {
+        if(_recordState.mCodeReceived.get(i) == -1.0) {
+            bout.set(i, bin(1));
+        }else {
+            bout.set(i,bin(0));
+        }
+    }
+    bvec answer = rs.decode(bout);
+    cout << answer << endl;
+    char *final = (char*)calloc([LDPCGenerator sharedGenerator].characterLength,sizeof(char));
+    for(int i = 0; i < [LDPCGenerator sharedGenerator].characterLength; i++) {
+        for(int bitIndex = 0; bitIndex < 8; bitIndex++) {
+            bin b = answer.get(i*8+bitIndex);
+            if(b == 1) {
+                final[i] |= 1 << abs(bitIndex-7);
+            }
+        }
+    }
+    NSLog(@"answer = %@", [NSString stringWithCString: final encoding: NSASCIIStringEncoding]);
+    if(self.delegate) {
+        [self.delegate decodedStringFound: [NSString stringWithCString: final encoding: NSASCIIStringEncoding]];
+    }
+#endif
     _recordState.mCodeLength = 0;
     _recordState.mCodeReceived.clear();
     _recordState.mSignalFound = false;
@@ -493,6 +585,7 @@ void HandleInputBuffer(void * inUserData,
     _recordState.mSignalFound = false;
     _recordState.mCodeReceived = zeros([LDPCGenerator sharedGenerator]->C.get_nvar());
     _recordState.mCodeLength = 0;
+    frameBufferSize = 0;
     initReceiver();
 
     OSStatus status = noErr;
@@ -530,8 +623,11 @@ void HandleInputBuffer(void * inUserData,
     }
 }
 
-- (void)updateTextView {
-//    _receiverTextView.text = [NSString stringWithCString:strbuf encoding:NSASCIIStringEncoding];
+- (void) frequenciesUpdated:(NSString *)frequencies {
+//    NSLog(@"%@",frequencies);
+    if(self.delegate && [self.delegate respondsToSelector: @selector(frequencyStringUpdated:)]) {
+        [self.delegate frequencyStringUpdated: frequencies];
+    }
 }
 
 - (IBAction)recordMessage:(id)sender {

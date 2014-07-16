@@ -45,7 +45,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.listenStatusLabel.text = @"Not Listening";
-    self.textField.text = @"12";
+    self.textField.text = @"123456789012  ";
     self.textField.delegate = self;
 }
 
@@ -55,10 +55,23 @@
         return;
     }
     if(self.textField.text.length > 0 && self.textField.text.length <= [LDPCGenerator sharedGenerator].characterLength) {
-        [self.bspkPlayer play: self.textField.text];
+        
+        [self.bspkPlayer play: [self padString: self.textField.text toLength: [LDPCGenerator sharedGenerator].characterLength]];
         self.sendButton.enabled = NO;
         self.statusLabel.text = [NSString stringWithFormat: @"sending %@",self.textField.text];
     }
+}
+
+- (NSString *) padString:(NSString *)string toLength:(int) length {
+    if(string.length != length) {
+        int paddinglength = length - string.length;
+        NSMutableString *mString = [NSMutableString new];
+        for(int i = 0; i < paddinglength; i++) {
+            [mString appendString: @" "];
+        }
+        return [string stringByAppendingString: mString];
+    }
+    return string;
 }
 
 - (IBAction) stopMessage:(id)sender {
@@ -90,6 +103,13 @@
 
 - (void) decodedStringFound:(NSString *) string {
     self.foundDecodeLabel.text = [NSString stringWithFormat: @"Found String: %@",string];
+    if(![string isEqualToString: @"decode failed"]) {
+        [self toggleListening: nil];
+    }
+}
+
+- (void) startDecoding {
+    self.listenStatusLabel.text = @"Listening, start decoding";
 }
 
 @end
