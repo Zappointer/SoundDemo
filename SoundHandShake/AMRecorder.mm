@@ -198,17 +198,21 @@ void HandleInputBuffer(void * inUserData,
                         pRecordState->mCodeLength++;
                         if(pRecordState->mCodeLength >= [LDPCGenerator sharedGenerator].characterLength * 8 * 2) {
                             cout << pRecordState->mCodeReceived << endl;
-                            [recorder decode];
+                            if([recorder decode]) {
+                                pRecordState->mSignalFound = true;
+                                break;
+                            }
                             pRecordState->mSignalFound = true;
+                            
                         }
                     } else {
                         pRecordState->mCodeReceived.set(0, 0.0);
                         pRecordState->mCodeLength++;
                     }
-                }else if(frequency > pRecordState->fq1-200 && frequency < pRecordState->fq1+200) {
+                }else if(frequency < 2400){//frequency > pRecordState->fq1-200 && frequency < pRecordState->fq1+200) {
                     pRecordState->mCodeReceived.set(pRecordState->mCodeLength, 1.0);
                     pRecordState->mCodeLength++;
-                } else if(frequency > pRecordState->fq2-200 && frequency < pRecordState->fq2+200) {
+                } else if(frequency > 5800 && frequency < 8200){//frequency > pRecordState->fq2-200 && frequency < pRecordState->fq2+200) {
                     pRecordState->mCodeReceived.set(pRecordState->mCodeLength, -1.0);
                     pRecordState->mCodeLength++;
                 } else {
@@ -224,6 +228,7 @@ void HandleInputBuffer(void * inUserData,
 #endif
                     cout << pRecordState->mCodeReceived << endl;
                     [recorder decode];
+                    break;
                 }
             }
         }
@@ -478,7 +483,8 @@ void HandleInputBuffer(void * inUserData,
     return self;
 }
 
-- (void) decode {
+- (BOOL) decode {
+    BOOL found = NO;
 #ifdef LDPC
     QLLRvec llr;
 //    BPSK Mod;
@@ -503,6 +509,7 @@ void HandleInputBuffer(void * inUserData,
         if(self.delegate) {
             [self.delegate decodedStringFound: [NSString stringWithCString: final encoding: NSASCIIStringEncoding]];
         }
+        found = YES;
 
     } else {
         NSLog(@"tried decoding but failed with %i", it);
@@ -522,6 +529,7 @@ void HandleInputBuffer(void * inUserData,
 //            NSLog(@"shift worked");
 //        }
         frameBufferSize = 0;
+        found = NO;
     }
 #else
     int m = 3;                //Reed-Solomon parameter m
@@ -554,6 +562,7 @@ void HandleInputBuffer(void * inUserData,
     _recordState.mCodeLength = 0;
     _recordState.mCodeReceived.clear();
     _recordState.mSignalFound = false;
+    return found;
 }
 
 - (void)dealloc {

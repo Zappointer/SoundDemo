@@ -70,9 +70,9 @@ void HandleOutputBuffer(void * inUserData,
     double single_theta3 = TWOPI * freq3 / SR;
     double single_theta = single_theta1;
     if(value == 0) {
-        single_theta = single_theta1;
+        single_theta = (TWOPI * (arc4random()%200+200) / SR);//single_theta1;
     } else if(value == 1) {
-        single_theta = single_theta2;
+        single_theta = (TWOPI * (arc4random()%2000+6000) / SR);//single_theta2;
     } else {
         single_theta = single_theta3;
     }
@@ -91,9 +91,9 @@ void HandleOutputBuffer(void * inUserData,
                 value = pPlayState->mMessage[index];
             }
             if(value == 0) {
-                single_theta = single_theta1;
+                single_theta = (TWOPI * (arc4random()%200+2000) / SR);//single_theta1;
             } else if(value == 1) {
-                single_theta = single_theta2;
+                single_theta = (TWOPI * (arc4random()%2000+6000) / SR);//single_theta2;
             } else {
                 single_theta = single_theta3;
             }
@@ -111,13 +111,18 @@ void HandleOutputBuffer(void * inUserData,
 //        } else {
 //            buffer[frame] = (AUDIO_CHANNEL_TYPE)sin(theta) * amplitude;
 //        }
-//        if(frameCounter < 10) {
-//            buffer[frame] = (AUDIO_CHANNEL_TYPE)sin(theta) * frameCounter * 0.1;
-//        } else if(frameCounter > framesPerCode-10) {
-//            buffer[frame] = (AUDIO_CHANNEL_TYPE)sin(theta) * (framesPerCode-frameCounter) * 0.1;
-//        } else {
+#define SMOOTH
+#ifdef SMOOTH
+        if(frameCounter < 10) {
+            buffer[frame] = (AUDIO_CHANNEL_TYPE)sin(theta) * frameCounter * 0.1;
+        } else if(frameCounter > framesPerCode-10) {
+            buffer[frame] = (AUDIO_CHANNEL_TYPE)sin(theta) * (framesPerCode-frameCounter) * 0.1;
+        } else {
+#endif
             buffer[frame] = (AUDIO_CHANNEL_TYPE)sin(theta) * amplitude;
-//        }
+#ifdef SMOOTH
+        }
+#endif
         frameCounter++;
 //        double theta = single_theta * frame;
 //        if (theta > TWOPI) {

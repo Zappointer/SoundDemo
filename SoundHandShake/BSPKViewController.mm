@@ -22,6 +22,8 @@
 @property (nonatomic,strong) IBOutlet UIButton *listenButton;
 @property (nonatomic,strong) IBOutlet UILabel *listenStatusLabel;
 @property (nonatomic,strong) IBOutlet UILabel *foundDecodeLabel;
+@property (nonatomic,strong) IBOutlet UILabel *extraInfoLabel;
+@property (nonatomic,strong) NSDate *startDate;
 
 @end
 
@@ -45,7 +47,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.listenStatusLabel.text = @"Not Listening";
-    self.textField.text = @"123456789012  ";
+    self.textField.text = @"1234";
     self.textField.delegate = self;
 }
 
@@ -86,6 +88,7 @@
         self.listenButton.selected = NO;
         self.listenStatusLabel.text = @"Not Listening";
     } else {
+        self.startDate = [NSDate date];
         [self.bspkRecorder startRecording];
         self.listenButton.selected = YES;
         self.listenStatusLabel.text = @"Listening";
@@ -104,6 +107,8 @@
 - (void) decodedStringFound:(NSString *) string {
     self.foundDecodeLabel.text = [NSString stringWithFormat: @"Found String: %@",string];
     if(![string isEqualToString: @"decode failed"]) {
+        NSTimeInterval interval = [[NSDate date] timeIntervalSinceDate: self.startDate];
+        self.extraInfoLabel.text = [NSString stringWithFormat: @"%1.2f used" ,interval];
         [self toggleListening: nil];
     }
 }

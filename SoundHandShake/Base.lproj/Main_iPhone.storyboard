@@ -293,6 +293,15 @@
                                 <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="info" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="LXR-Qx-znX">
+                                <rect key="frame" x="20" y="271" width="445" height="21"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="21" id="kXP-Xc-smN"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
@@ -300,8 +309,10 @@
                             <constraint firstItem="ecP-Pp-1jl" firstAttribute="trailing" secondItem="xUA-wj-Jlt" secondAttribute="trailing" id="5Tr-aS-vmg"/>
                             <constraint firstItem="ecP-Pp-1jl" firstAttribute="leading" secondItem="93f-SJ-pYe" secondAttribute="leading" constant="20" symbolic="YES" id="6Dt-XJ-8og"/>
                             <constraint firstItem="ZPi-TK-KTD" firstAttribute="baseline" secondItem="Ijk-R8-3SN" secondAttribute="baseline" id="6O6-LQ-FOD"/>
+                            <constraint firstItem="LXR-Qx-znX" firstAttribute="top" secondItem="wpZ-JU-gx4" secondAttribute="bottom" constant="8" symbolic="YES" id="9L6-Fc-qYa"/>
                             <constraint firstItem="ZPi-TK-KTD" firstAttribute="leading" secondItem="93f-SJ-pYe" secondAttribute="leading" constant="86" id="Ede-3E-RhR"/>
                             <constraint firstItem="Pct-L1-Gdb" firstAttribute="centerX" secondItem="HR6-GQ-l1k" secondAttribute="centerX" id="NP2-aN-Hki"/>
+                            <constraint firstAttribute="trailing" secondItem="LXR-Qx-znX" secondAttribute="trailing" constant="15" id="VSe-gD-Zj5"/>
                             <constraint firstItem="ZPi-TK-KTD" firstAttribute="top" secondItem="xUA-wj-Jlt" secondAttribute="bottom" constant="8" symbolic="YES" id="WzE-qg-gkU"/>
                             <constraint firstItem="HR6-GQ-l1k" firstAttribute="trailing" secondItem="xUA-wj-Jlt" secondAttribute="trailing" id="Xiz-M6-UmJ"/>
                             <constraint firstItem="Pct-L1-Gdb" firstAttribute="top" secondItem="HR6-GQ-l1k" secondAttribute="bottom" constant="8" symbolic="YES" id="Zbb-6r-DRf"/>
@@ -311,12 +322,14 @@
                             <constraint firstItem="wpZ-JU-gx4" firstAttribute="leading" secondItem="HR6-GQ-l1k" secondAttribute="leading" id="gfz-xI-2dH"/>
                             <constraint firstItem="wpZ-JU-gx4" firstAttribute="top" secondItem="Pct-L1-Gdb" secondAttribute="bottom" constant="8" symbolic="YES" id="qBq-Aa-9LI"/>
                             <constraint firstAttribute="trailing" secondItem="Ijk-R8-3SN" secondAttribute="trailing" constant="97" id="vcT-Wu-5jb"/>
+                            <constraint firstItem="LXR-Qx-znX" firstAttribute="leading" secondItem="wpZ-JU-gx4" secondAttribute="leading" id="vgX-F7-x0x"/>
                             <constraint firstItem="xUA-wj-Jlt" firstAttribute="leading" secondItem="ecP-Pp-1jl" secondAttribute="leading" id="vxa-ii-LbH"/>
                             <constraint firstItem="wpZ-JU-gx4" firstAttribute="trailing" secondItem="HR6-GQ-l1k" secondAttribute="trailing" id="xqC-WP-Yne"/>
                             <constraint firstItem="ecP-Pp-1jl" firstAttribute="top" secondItem="93f-SJ-pYe" secondAttribute="top" constant="20" symbolic="YES" id="zq7-u6-9NI"/>
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="extraInfoLabel" destination="LXR-Qx-znX" id="BDe-xc-RBX"/>
                         <outlet property="foundDecodeLabel" destination="wpZ-JU-gx4" id="hfD-Rz-nqw"/>
                         <outlet property="listenButton" destination="Pct-L1-Gdb" id="ZnK-66-nlr"/>
                         <outlet property="listenStatusLabel" destination="HR6-GQ-l1k" id="7Lf-Wa-5ma"/>

@@ -60,7 +60,7 @@ typedef struct {
 //- (IBAction)recordMessage:(id)sender;
 - (void)startRecording;
 - (void)stopRecording;
-- (void) decode;
+- (BOOL) decode;
 - (void) frequenciesUpdated:(NSString *)frequencies;
 
 @end

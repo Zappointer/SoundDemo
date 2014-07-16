@@ -18,7 +18,7 @@
     [LDPCGenerator sharedGenerator].signal0Frequency = 17000.0;
     [LDPCGenerator sharedGenerator].signal1Frequency = 19000.0;
     [LDPCGenerator sharedGenerator].startSignalFrequency = 18000.0;
-    [LDPCGenerator sharedGenerator].characterLength = 14;
+    [LDPCGenerator sharedGenerator].characterLength = 4;
     [[LDPCGenerator sharedGenerator] setup];
     return YES;
 }
