@@ -10,10 +10,9 @@
 #import <sstream>
 #import "LDPCGenerator.h"
 
-#define AUDIO_CHANNEL_TYPE Float32
-
 using namespace std;
 
+static const double TWOPI = 2.0*M_PI;
 static const unsigned char ParityTable256[256] =
 {
 #   define P2(n) n, n^1, n^1, n
@@ -25,6 +24,15 @@ static const unsigned char ParityTable256[256] =
 static unsigned char barkerbin[BARKER_LEN] = {
     0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0
 };
+
+double thetaFromValue(int value, double freq0, double freq1, double startFreq) {
+    if(value == 0) {
+        return freq0;//(TWOPI * (arc4random()%200+200) / SR);//single_theta1;
+    } else if(value == 1) {
+        return freq1;//(TWOPI * (arc4random()%2000+6000) / SR);//single_theta2;
+    }
+    return startFreq;
+}
 
 void HandleOutputBuffer(void * inUserData,
                        AudioQueueRef inAQ,
@@ -45,7 +53,7 @@ void HandleOutputBuffer(void * inUserData,
 //    printf("playing from : %1.5f (#%lld)\n", pPlayState->mCurrentPacket/(float)SR, pPlayState->mCurrentPacket);
 //    printf("message length: %d samples\n", (unsigned int)pPlayState->mMessageLength);
     const double amplitude = 2;
-    const double TWOPI = 2.0*M_PI;
+    
     const double secondPerCode = 0.01;
     const UInt32 framesPerCode = SR*secondPerCode;
     
@@ -62,20 +70,11 @@ void HandleOutputBuffer(void * inUserData,
     } else {
         value = pPlayState->mMessage[index];
     }
-    double freq = pPlayState->fq1;
-    double single_theta1 = TWOPI * freq / SR;
-    double freq2 = pPlayState->fq2;
-    double single_theta2 = TWOPI * freq2 / SR;
-    double freq3 = pPlayState->fq3;
-    double single_theta3 = TWOPI * freq3 / SR;
-    double single_theta = single_theta1;
-    if(value == 0) {
-        single_theta = (TWOPI * (arc4random()%200+200) / SR);//single_theta1;
-    } else if(value == 1) {
-        single_theta = (TWOPI * (arc4random()%2000+6000) / SR);//single_theta2;
-    } else {
-        single_theta = single_theta3;
-    }
+    
+    double single_theta1 = TWOPI * pPlayState->fq1 / SR;
+    double single_theta2 = TWOPI * pPlayState->fq2 / SR;
+    double single_theta3 = TWOPI * pPlayState->fq3 / SR;
+    double single_theta = thetaFromValue(value,  single_theta1,  single_theta2, single_theta3);
     
     for(UInt32 frame = 0; frame < size; frame++) {
         if(frameCounter > framesPerCode) {
@@ -90,13 +89,7 @@ void HandleOutputBuffer(void * inUserData,
             } else {
                 value = pPlayState->mMessage[index];
             }
-            if(value == 0) {
-                single_theta = (TWOPI * (arc4random()%200+2000) / SR);//single_theta1;
-            } else if(value == 1) {
-                single_theta = (TWOPI * (arc4random()%2000+6000) / SR);//single_theta2;
-            } else {
-                single_theta = single_theta3;
-            }
+            single_theta = thetaFromValue(value,  single_theta1,  single_theta2, single_theta3);
         }
         double theta = single_theta * frame;
         if (theta > TWOPI) {

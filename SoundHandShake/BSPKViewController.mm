@@ -117,4 +117,11 @@
     self.listenStatusLabel.text = @"Listening, start decoding";
 }
 
+
+
+- (void) bufferUpdatedWithData:(void *)data size:(UInt32)size {
+    AUDIO_INPUT_TYPE *samples = (AUDIO_INPUT_TYPE *)data;
+    
+}
+
 @end

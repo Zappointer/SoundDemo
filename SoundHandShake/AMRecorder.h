@@ -11,7 +11,7 @@
 #import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <Accelerate/Accelerate.h>
-#include <limits.h>
+#import <limits.h>
 #import <itpp/itcomm.h>
 #import <itpp/base/math/elem_math.h>
 
@@ -21,6 +21,7 @@
 - (void) frequencyStringUpdated:(NSString*) frequencyString;
 - (void) decodedStringFound:(NSString *) string;
 - (void) startDecoding;
+- (void) bufferUpdatedWithData:(void *)data size:(UInt32) size;
 
 @end
 
@@ -51,16 +52,15 @@ typedef struct {
     size_t index;	// In samples
 }
 
+@property (nonatomic, assign) BOOL performDecode;
 @property (nonatomic, assign) AQRecordState recordState;
 @property (nonatomic, assign) CGFloat frequency;
 @property (nonatomic, assign) id<RecorderDelegate> delegate;
-//@property (retain, nonatomic) IBOutlet UIButton *playButton;
-//@property (retain, nonatomic) IBOutlet UIButton *recordButton;
-//@property (retain, nonatomic) IBOutlet UITextView *receiverTextView;
-//- (IBAction)recordMessage:(id)sender;
+
 - (void)startRecording;
 - (void)stopRecording;
 - (BOOL) decode;
-- (void) frequenciesUpdated:(NSString *)frequencies;
+- (void) displayBuffer:(AudioQueueBufferRef) audioQueueReference;
+- (void) frequenciesUpdated:(NSArray *)frequencies;
 
 @end

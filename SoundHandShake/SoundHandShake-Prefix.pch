@@ -16,3 +16,6 @@
     #import <Foundation/Foundation.h>
     #import "AMConstants.h"
 #endif
+
+#define AUDIO_INPUT_TYPE SInt16
+#define AUDIO_CHANNEL_TYPE Float32
