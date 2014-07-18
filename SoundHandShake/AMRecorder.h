@@ -37,6 +37,8 @@ typedef struct {
     bool mSignalFound;
     bool mIsRunning;
     double fq1,fq2,fq3;
+    int framesCount;
+    int codeIndex;
 } AQRecordState;
 
 @interface AMRecorder : NSObject
@@ -56,10 +58,11 @@ typedef struct {
 @property (nonatomic, assign) AQRecordState recordState;
 @property (nonatomic, assign) CGFloat frequency;
 @property (nonatomic, assign) id<RecorderDelegate> delegate;
+@property (nonatomic, assign) BOOL isDecoding;
 
 - (void)startRecording;
 - (void)stopRecording;
-- (BOOL) decode;
+- (void) decode;
 - (void) displayBuffer:(AudioQueueBufferRef) audioQueueReference;
 - (void) frequenciesUpdated:(NSArray *)frequencies;
 

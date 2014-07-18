@@ -43,12 +43,12 @@
                    "0 0.27684 0.28342 0 0 0 0 0 0.43974",
                    "0 0 0 0 0 0.01568 0.85244 0.13188",
                    "rand",   // random unstructured matrix
-                   "200 6"); // optimize girth
+                   "0 0"); // optimize girth
         lH.display_stats();
         std::cout << "c:" << lH.get_nvar() << " r:" << lH.get_ncheck() << std::endl;
         strongMe->G = LDPC_Generator_Systematic(&lH);
         strongMe->C = LDPC_Code(&lH, &strongMe->G);
-//        strongMe->C.set_exit_conditions(2500);
+        strongMe->C.set_exit_conditions(2500);
         strongMe->C.set_llrcalc(LLR_calc_unit(12,0,7));
         
         

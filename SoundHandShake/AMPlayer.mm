@@ -52,7 +52,7 @@ void HandleOutputBuffer(void * inUserData,
 
 //    printf("playing from : %1.5f (#%lld)\n", pPlayState->mCurrentPacket/(float)SR, pPlayState->mCurrentPacket);
 //    printf("message length: %d samples\n", (unsigned int)pPlayState->mMessageLength);
-    const double amplitude = 2;
+    const double amplitude = 1;
     
     const double secondPerCode = 0.01;
     const UInt32 framesPerCode = SR*secondPerCode;
@@ -82,7 +82,9 @@ void HandleOutputBuffer(void * inUserData,
             index++;
             if(index >= pPlayState->mMessageLength) {
                 index = -1;
+                [((AMPlayer *)pPlayState->mSelf) stop];
                 pPlayState->mMessageSentCounter++;
+                break;
             }
             if(index == -1) {
                 value = 2;
@@ -183,6 +185,7 @@ void HandleOutputBuffer(void * inUserData,
     _playState.mMessageIndex = -1;
     _playState.mMessageIndexFrameCount = 0;
     _playState.mMessageSentCounter = 0;
+    _playState.mSelf = self;
 
     [self _encodeMessageflat: message];
 //    [self _encodeMessage:message];

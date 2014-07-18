@@ -20,9 +20,11 @@ static AUDIO_INPUT_TYPE *copiedSampleBuffer;
 static AUDIO_INPUT_TYPE *frameBuffer;
 static AUDIO_INPUT_TYPE *tempSamples;
 static int frameBufferSize;
-static const UInt32 fftFrame = 256;
+static const UInt32 fftFrame = 128;
 static const double secondPerCode = 0.01;//SR/(double)fftFrame;
 static const UInt32 framesPerCode = SR*secondPerCode;
+static const UInt32 framePerFFT = ceil(framesPerCode/(float)fftFrame);
+//static const float framePerFFT = framesPerCode/(float)fftFrame);
 static NSMutableArray *freqs = [NSMutableArray new];
 
 void initReceiver(void) {
@@ -62,6 +64,31 @@ void ConvertInt16ToFloat(AQRecordState *AQState, void *buf, float *outputBuf, si
 
 float MagnitudeSquared2(float x, float y) {
     return ((x*x) + (y*y));
+}
+
+bool matchFrequency(float input, float target, float tolerance) {
+    return abs(input - target) <= tolerance;
+}
+
+float approximateFrequncyBit(float input, float freq0, float freq1) {
+    float smaller = freq0;
+    float bigger = freq1;
+    float bitValue = 1.0f;
+    if(freq1 < freq0) {
+        smaller = freq1;
+        bigger = freq0;
+        bitValue = -1.0f;
+    }
+    if(input > bigger) {
+        return -bitValue;
+    } else if(input < smaller) {
+        return bitValue;
+    }
+    float ratio = (input - smaller)/(bigger-smaller);
+    if(bitValue == -1.0f) {
+        ratio = 1.0f - ratio;
+    }
+    return ratio * 2.0f - 1.0f;
 }
 
 void HandleInputBuffer(void * inUserData,
@@ -106,7 +133,7 @@ void HandleInputBuffer(void * inUserData,
     UInt32 trimSize = nsamples % fftFrame;
     nsamples -= trimSize;
     if(trimSize > 0) {
-        printf("trim size : %u\n", (unsigned int)trimSize);
+//        printf("trim size : %u\n", (unsigned int)trimSize);
         memcpy(frameBuffer,samples+(codeFrames*fftFrame),trimSize*sizeof(AUDIO_INPUT_TYPE));
         frameBufferSize = trimSize;
     } else {
@@ -122,6 +149,10 @@ void HandleInputBuffer(void * inUserData,
      vector, which for a real signal, divides into an even-odd configuration.
      */
     NSMutableString *frequencies = [NSMutableString new];
+    int targetBinLength = [LDPCGenerator sharedGenerator].characterLength * 8 * 2;
+    int bit_missing_tolerance = 10;
+    int framesCount = pRecordState->framesCount;
+    int codeIndex = pRecordState->codeIndex;
 
     for(int codeFrameIndex = 0; codeFrameIndex < codeFrames; codeFrameIndex++) {
         memcpy(smallFBuffer, fBuffer+(codeFrameIndex*fftFrame), fftFrame*sizeof(float));
@@ -139,17 +170,108 @@ void HandleInputBuffer(void * inUserData,
         }
         float frequency = bin*((double)SR/recorder->bufferCapacity);
 //        [freqs addObject: @(frequency)];
-        if(!pRecordState->mSignalFound && frequency > pRecordState->fq3-200 && frequency < pRecordState->fq3+200) {
+        
+        if(pRecordState->mSignalFound) {
+            if(matchFrequency(frequency, pRecordState->fq3, 200.0f)) {
+                if(pRecordState->mCodeLength > targetBinLength - bit_missing_tolerance) {
+                    
+//                    while(pRecordState->mCodeLength < targetBinLength) {
+//                        pRecordState->mCodeReceived.set(pRecordState->mCodeLength,.0);
+//                        pRecordState->mCodeLength++;
+//                    }
+                    cout << pRecordState->mCodeReceived << endl;
+                    [recorder decode];
+                    pRecordState->mCodeReceived.clear();
+                    pRecordState->mCodeLength = 0;
+                    pRecordState->framesCount = 0;
+                    pRecordState->codeIndex = 0;
+                    framesCount = 0;
+                    codeIndex = 0;
+                } else {
+                    if(pRecordState->mCodeLength != 0) { // skip on zero
+                        if(pRecordState->mCodeLength == codeIndex) {
+                            // a noise, mark as error bit and go on
+                            pRecordState->mCodeReceived.set(pRecordState->mCodeLength, approximateFrequncyBit(frequency, pRecordState->fq1, pRecordState->fq2));
+                            pRecordState->mCodeLength++;
+                        }
+                        framesCount++;
+                    }
+                }
+            }else if(matchFrequency(frequency, pRecordState->fq1, 200.0f)) {
+                if(pRecordState->mCodeLength == codeIndex) {
+                    pRecordState->mCodeReceived.set(pRecordState->mCodeLength, 1.0);
+                    pRecordState->mCodeLength++;
+//                    printf("%i %f\n", codeIndex, pRecordState->mCodeReceived.get(codeIndex));
+                } else {
+                    double value = pRecordState->mCodeReceived[codeIndex];
+                    if(value == 1.0) {
+                    } else if(value == -1.0) {
+                        framesCount = (codeIndex+1)*framePerFFT;
+//                        pRecordState->mCodeReceived.set(pRecordState->mCodeLength, value);
+//                        pRecordState->mCodeLength++;
+//                        printf("%i %f\n", codeIndex+1, pRecordState->mCodeReceived.get(codeIndex+1));
+                    } else {
+                        pRecordState->mCodeReceived.set(codeIndex, 1.0);
+                    }
+                }
+                framesCount++;
+            } else if(matchFrequency(frequency, pRecordState->fq2, 200.0f)) {
+                if(pRecordState->mCodeLength == codeIndex) {
+                    pRecordState->mCodeReceived.set(pRecordState->mCodeLength, -1.0);
+                    pRecordState->mCodeLength++;
+//                    printf("%i %f\n", codeIndex, pRecordState->mCodeReceived.get(codeIndex));
+                } else {
+                    double value = pRecordState->mCodeReceived[codeIndex];
+                    if(value == -1.0) {
+                    } else if(value == 1.0) {
+                        framesCount = (codeIndex+1)*framePerFFT;
+//                        pRecordState->mCodeReceived.set(pRecordState->mCodeLength, value);
+//                        pRecordState->mCodeLength++;
+//                        printf("%i %f\n", codeIndex+1, pRecordState->mCodeReceived.get(codeIndex+1));
+                    } else {
+                        pRecordState->mCodeReceived.set(codeIndex, -1.0);
+                    }
+                }
+                framesCount++;
+            } else {
+                if(pRecordState->mCodeLength == codeIndex) {
+                    pRecordState->mCodeReceived.set(pRecordState->mCodeLength, approximateFrequncyBit(frequency, pRecordState->fq1, pRecordState->fq2));
+//                    printf("%i %f\n", codeIndex, pRecordState->mCodeReceived.get(codeIndex));
+                    pRecordState->mCodeLength++;
+                }
+                framesCount++;
+            }
+            codeIndex = framesCount/framePerFFT;
+            
+            if(pRecordState->mCodeLength >= targetBinLength) {
+                cout << pRecordState->mCodeReceived << endl;
+                [recorder decode];
+                pRecordState->mSignalFound = false;
+                pRecordState->mCodeReceived.clear();
+                pRecordState->mCodeLength = 0;
+                pRecordState->framesCount = 0;
+                pRecordState->codeIndex = 0;
+                framesCount = 0;
+                codeIndex = 0;
+            }
+        }
+    
+        if(!pRecordState->mSignalFound && matchFrequency(frequency, pRecordState->fq3, 200.0f)) {
             pRecordState->mSignalFound = true;
             pRecordState->mCodeReceived.clear();
             pRecordState->mCodeLength = 0;
-            printf("found start decoding\n");
+            pRecordState->framesCount = 0;
+            pRecordState->codeIndex = 0;
+            framesCount = 0;
+            codeIndex = 0;
             if(recorder.delegate) {
                 [recorder.delegate startDecoding];
             }
-        } else {
         }
     }
+    
+    pRecordState->framesCount = framesCount;
+    pRecordState->codeIndex = codeIndex;
     
 //    for(int codeFrameIndex = 0; codeFrameIndex < codeFrames; codeFrameIndex++) {
 //        memcpy(smallFBuffer, fBuffer+(codeFrameIndex*framesPerCode), framesPerCode*sizeof(float));
@@ -256,16 +378,29 @@ void HandleInputBuffer(void * inUserData,
     });
 }
     
-- (BOOL) decode {
-    BOOL found = NO;
-    QLLRvec llr;
-    int it = [LDPCGenerator sharedGenerator]->C.bp_decode([LDPCGenerator sharedGenerator]->C.get_llrcalc().to_qllr(_recordState.mCodeReceived), llr);
-    if(it >= 1) {
-        bvec bitsout = llr < 0;
-        bvec answer = llr.get(0, [LDPCGenerator sharedGenerator].characterLength*8-1) < 0;
-        cout << answer << endl;
-        char *final = (char*)calloc([LDPCGenerator sharedGenerator].characterLength,sizeof(char));
-        for(int i = 0; i < [LDPCGenerator sharedGenerator].characterLength; i++) {
+- (void) decode {
+    if(self.isDecoding) {
+        NSLog(@"decoding so skip");
+        return;
+    }
+    vec codeVec = vec(_recordState.mCodeReceived);
+    int characterLength = [LDPCGenerator sharedGenerator].characterLength;
+    int targetBitLength = [LDPCGenerator sharedGenerator].characterLength*8;
+    __weak typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT,0), ^{
+        __strong typeof(weakSelf) sSelf = weakSelf;
+        sSelf.isDecoding = YES;
+        QLLRvec llr;
+        int it = [LDPCGenerator sharedGenerator]->C.bp_decode([LDPCGenerator sharedGenerator]->C.get_llrcalc().to_qllr(codeVec), llr);
+        bvec answer = llr.get(0, targetBitLength-1) < 0;
+        cout << "decoded: " << answer << endl;
+//        bvec expected = bvec("0 0 1 1 0 0 0 0 0 0 1 1 0 0 0 0 0 0 1 1 0 0 0 0 0 0 1 1 0 0 0 0 1 1 0 1 0 1 1 0 0 0 0 1 1 0 1 0 1 1 1 0 1 1 1 1 1 0 1 0 0 0 0 0");
+        bvec expected = bvec("0 0 1 1 1 0 0 1 0 0 1 1 1 0 0 0 0 0 1 1 0 1 1 1 0 0 1 1 0 1 0 1 0 0 0 0 1 0 1 1 1 0 0 0 0 0 0 1 1 0 1 1 1 0 1 0 0 0 1 1 1 1 0 0");
+        BERC berc;
+        berc.count(expected, (llr < 0));
+        NSLog(@"The bit error probability after decoding is %f correct: %f total: %f", berc.get_errorrate(), berc.get_corrects(), berc.get_total_bits());
+        char *final = (char*)calloc(characterLength,sizeof(char));
+        for(int i = 0; i < characterLength; i++) {
             for(int bitIndex = 0; bitIndex < 8; bitIndex++) {
                 bin b = answer.get(i*8+bitIndex);
                 if(b == 1) {
@@ -273,26 +408,23 @@ void HandleInputBuffer(void * inUserData,
                 }
             }
         }
-        NSLog(@"%i", it);
-        NSLog(@"answer = %@", [NSString stringWithCString: final encoding: NSASCIIStringEncoding]);
-        if(self.delegate) {
-            [self.delegate decodedStringFound: [NSString stringWithCString: final encoding: NSASCIIStringEncoding]];
+        NSLog(@"iteration: %i answer = %@", it, [NSString stringWithCString: final encoding: NSASCIIStringEncoding]);
+        if(it >= 0 && final[0] != '\0') {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                sSelf.isDecoding = NO;
+                if(sSelf.delegate && [sSelf.delegate respondsToSelector: @selector(decodedStringFound:)]) {
+                    [sSelf.delegate decodedStringFound: [NSString stringWithCString: final encoding: NSASCIIStringEncoding]];
+                }
+            });
+        } else {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                sSelf.isDecoding = NO;
+                if(sSelf.delegate && [sSelf.delegate respondsToSelector: @selector(decodedStringFound:)]) {
+                    [sSelf.delegate decodedStringFound: @"decode failed"];
+                }
+            });
         }
-        found = YES;
-
-    } else {
-        NSLog(@"tried decoding but failed with %i", it);
-        if(self.delegate) {
-            [self.delegate decodedStringFound: @"decode failed"];
-        }
-        llr.clear();
-        frameBufferSize = 0;
-        found = NO;
-    }
-    _recordState.mCodeLength = 0;
-    _recordState.mCodeReceived.clear();
-    _recordState.mSignalFound = false;
-    return found;
+    });
 }
 
 - (void)dealloc {
@@ -319,6 +451,8 @@ void HandleInputBuffer(void * inUserData,
     [self _setupAudioFormat];
     _recordState.mCurrentPacket = 0;
     _recordState.mSelf = self;
+    _recordState.framesCount = 0;
+    _recordState.codeIndex = 0;
     _recordState.fq1 = [LDPCGenerator sharedGenerator].signal0Frequency;
     _recordState.fq2 = [LDPCGenerator sharedGenerator].signal1Frequency;
     _recordState.fq3 = [LDPCGenerator sharedGenerator].startSignalFrequency;
